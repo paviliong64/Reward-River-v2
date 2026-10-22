@@ -19,24 +19,6 @@
       "updatedAt": "2026-10-22T22:12:14.442+00:00"
     },
     {
-      "id": "usr_admin_master",
-      "email": "admin@rewardriver.com",
-      "passwordHash": "66b2004fade0fa9ba3c710bc87c166ddca54e03dc94e8e24b3b5b9b8ed6f0c879c00a21e12e9b441195ac05f442bb45f6f7d21892421692c5f346be6d33febea",
-      "salt": "620af0af32d872ba6205d4fa99feb933",
-      "displayName": "Master Administrator (Injazify Studios)",
-      "emailVerified": true,
-      "role": "admin",
-      "externalOpaqueId": "admin_opaque_master_key",
-      "phoneNumber": null,
-      "whatsappNumber": null,
-      "countryCode": "US",
-      "provider": "supabase",
-      "advertiserBalanceCents": 100000,
-      "hasPromptedPhone": false,
-      "createdAt": "2026-10-22T22:30:27.118407+00:00",
-      "updatedAt": "2026-10-22T22:50:45.567Z"
-    },
-    {
       "id": "usr_1792708228277",
       "email": "worker_test_1792708228266@rewardriver.com",
       "passwordHash": "dummy_hash",
@@ -71,9 +53,60 @@
       "hasPromptedPhone": false,
       "createdAt": "2026-10-22T22:49:13.156599+00:00",
       "updatedAt": "2026-10-22T22:49:15.592+00:00"
+    },
+    {
+      "id": "usr_admin_master",
+      "email": "admin@rewardriver.com",
+      "passwordHash": "66b2004fade0fa9ba3c710bc87c166ddca54e03dc94e8e24b3b5b9b8ed6f0c879c00a21e12e9b441195ac05f442bb45f6f7d21892421692c5f346be6d33febea",
+      "salt": "620af0af32d872ba6205d4fa99feb933",
+      "displayName": "Master Administrator (Injazify Studios)",
+      "emailVerified": true,
+      "role": "admin",
+      "externalOpaqueId": "admin_opaque_master_key",
+      "phoneNumber": null,
+      "whatsappNumber": null,
+      "countryCode": "US",
+      "provider": "supabase",
+      "advertiserBalanceCents": 100000,
+      "hasPromptedPhone": false,
+      "createdAt": "2026-10-22T22:30:27.118407+00:00",
+      "updatedAt": "2026-10-22T22:50:45.57+00:00"
+    },
+    {
+      "id": "usr_1792709897734",
+      "email": "worker_test_1792709897734@rewardriver.com",
+      "passwordHash": "dummy_hash",
+      "salt": "dummy_salt",
+      "displayName": "Test Supabase Worker",
+      "emailVerified": true,
+      "role": "user",
+      "externalOpaqueId": "opaque_1792709897734",
+      "createdAt": "2026-10-22T22:58:17.734Z",
+      "updatedAt": "2026-10-22T22:58:19.194Z",
+      "advertiserBalanceCents": 780
     }
   ],
   "rewardLedger": [
+    {
+      "id": "ledg_65b65a90-e734-4019-9a6e-a7412d6f2880",
+      "userId": "usr_1792707132874",
+      "providerTxId": "bitlabs_test_1792709878497_tx_bitlabs_1792709878804",
+      "amountCents": 120,
+      "entryType": "credit",
+      "status": "confirmed",
+      "description": "Reward River Direct Gateway • Prime Surveys Delta: Completed Reward (12,000 Points)",
+      "createdAt": "2026-10-22T22:57:58.88+00:00"
+    },
+    {
+      "id": "ledg_ba9c45f3-39ac-494a-8e8d-9b3ca290c4f4",
+      "userId": "usr_1792707132874",
+      "providerTxId": "bitlabs_test_1792709790641_tx_bitlabs_1792709790976",
+      "amountCents": 120,
+      "entryType": "credit",
+      "status": "confirmed",
+      "description": "Reward River Direct Gateway • Prime Surveys Delta: Completed Reward (12,000 Points)",
+      "createdAt": "2026-10-22T22:56:31.027+00:00"
+    },
     {
       "id": "ledg_0541ced6-0e92-476b-b203-3dfc63013d00",
       "userId": "usr_1792709353989",
@@ -133,6 +166,28 @@
       "status": "confirmed",
       "description": "Direct Survey Reward (8,000 Points)",
       "createdAt": "2026-10-22T22:12:13.501+00:00"
+    },
+    {
+      "id": "ledg_1792709898298",
+      "userId": "usr_1792709897734",
+      "providerTxId": "tx_1792709898298",
+      "amountCents": 80,
+      "entryType": "credit",
+      "status": "confirmed",
+      "description": "Direct Survey Reward (8,000 Points)",
+      "createdAt": "2026-10-22T22:58:18.298Z",
+      "processedAt": "2026-10-22T22:58:18.298Z"
+    },
+    {
+      "id": "ledg_4f157f24-3c4d-4f71-af79-d1a2374fb29b",
+      "userId": "usr_1792709897734",
+      "providerTxId": "task_task_42b70ca9-33f5-44d0-bc98-839789a28efa_sub_3c3f7b26-d58f-4d88-933b-63ca64c715df",
+      "amountCents": 10,
+      "entryType": "credit",
+      "status": "confirmed",
+      "description": "Completed Task: \"Visit Reward River Telegram & Join Community\" (1,000 Points)",
+      "createdAt": "2026-10-22T22:58:20.056Z",
+      "processedAt": "2026-10-22T22:58:20.056Z"
     }
   ],
   "tasks": [
@@ -222,10 +277,67 @@
       "adminNotes": null,
       "createdAt": "2026-10-22T22:49:15.036198+00:00",
       "updatedAt": "2026-10-22T22:49:16.722+00:00"
+    },
+    {
+      "advertiserId": "usr_1792709897734",
+      "advertiserEmail": "worker_test_1792709897734@rewardriver.com",
+      "title": "Visit Reward River Telegram & Join Community",
+      "description": "Join our official Telegram announcement channel and submit username proof.",
+      "instructions": [
+        "1. Open link",
+        "2. Click Join",
+        "3. Submit handle"
+      ],
+      "category": "social",
+      "targetUrl": "https://t.me/rewardriver",
+      "rewardPoints": 1000,
+      "rewardCents": 10,
+      "totalSlots": 20,
+      "targetCountry": "ALL",
+      "targetDevice": "all",
+      "requiredProofType": "text",
+      "proofInstructions": "Enter your Telegram username",
+      "status": "active",
+      "platformFeePercent": 10,
+      "advertiserBudgetReservedCents": 200,
+      "advertiserFeeReservedCents": 20,
+      "id": "task_42b70ca9-33f5-44d0-bc98-839789a28efa",
+      "completedSlots": 1,
+      "createdAt": "2026-10-22T22:58:19.194Z",
+      "updatedAt": "2026-10-22T22:58:20.329Z"
     }
   ],
-  "taskSubmissions": [],
-  "advertiserDeposits": [],
+  "taskSubmissions": [
+    {
+      "id": "sub_3c3f7b26-d58f-4d88-933b-63ca64c715df",
+      "taskId": "task_42b70ca9-33f5-44d0-bc98-839789a28efa",
+      "taskTitle": "Visit Reward River Telegram & Join Community",
+      "workerId": "usr_1792709897734",
+      "workerEmail": "worker_test_1792709897734@rewardriver.com",
+      "advertiserId": "usr_1792709897734",
+      "rewardPoints": 1000,
+      "rewardCents": 10,
+      "proofText": "@reward_river_tester",
+      "status": "approved",
+      "submittedAt": "2026-10-22T22:58:19.762Z",
+      "reviewedAt": "2026-10-22T22:58:20.625Z",
+      "reviewedBy": "admin_sys"
+    }
+  ],
+  "advertiserDeposits": [
+    {
+      "id": "dep_08b9e9c8-846c-4a54-9c7c-d78d1fea22a5",
+      "advertiserId": "usr_1792709897734",
+      "advertiserEmail": "worker_test_1792709897734@rewardriver.com",
+      "amountCents": 1000,
+      "amountPoints": 100000,
+      "method": "usdt_trc20",
+      "status": "completed",
+      "txHashOrRef": "ref_9033de6731fa590e",
+      "createdAt": "2026-10-22T22:58:18.610Z",
+      "confirmedAt": "2026-10-22T22:58:18.610Z"
+    }
+  ],
   "adSettings": {
     "adsEnabled": true,
     "testMode": false,
@@ -244,7 +356,7 @@
       "format": "728x90",
       "enabled": true,
       "adCode": "<div class=\"rr-custom-sponsor\">Reward River Sponsor Ad 2026</div>",
-      "updatedAt": "2026-10-22T22:49:17.271+00:00"
+      "updatedAt": "2026-10-22T22:58:20.900Z"
     }
   ],
   "offerwallSettings": {
@@ -321,6 +433,34 @@
   ],
   "platformTreasury": [
     {
+      "id": "pt_8c40cea9-49f0-4bc6-9f48-3c8d29e62f22",
+      "providerId": "bitlabs_test_1792709878497",
+      "providerName": "BitLabs Surveys & Apps",
+      "sourceType": "survey",
+      "grossAmountCents": 300,
+      "userShareCents": 120,
+      "platformShareCents": 180,
+      "userId": "usr_1792707132874",
+      "userEmail": "worker_test_1792707132874@rewardriver.com",
+      "providerTxId": "tx_bitlabs_1792709878804",
+      "description": "Reward River Platform 60% Margin from BitLabs Surveys & Apps (Tx: tx_bitlabs_1792709878804)",
+      "createdAt": "2026-10-22T22:57:59.165+00:00"
+    },
+    {
+      "id": "pt_8a524e54-2459-4920-966e-a5f3941fd047",
+      "providerId": "bitlabs_test_1792709790641",
+      "providerName": "BitLabs Surveys & Apps",
+      "sourceType": "survey",
+      "grossAmountCents": 300,
+      "userShareCents": 120,
+      "platformShareCents": 180,
+      "userId": "usr_1792707132874",
+      "userEmail": "worker_test_1792707132874@rewardriver.com",
+      "providerTxId": "tx_bitlabs_1792709790976",
+      "description": "Reward River Platform 60% Margin from BitLabs Surveys & Apps (Tx: tx_bitlabs_1792709790976)",
+      "createdAt": "2026-10-22T22:56:31.33+00:00"
+    },
+    {
       "id": "pt_6e309a82-ab2f-4dd5-a869-40d326a351f5",
       "providerId": "cpx",
       "providerName": "Reward River Direct Gateway • Survey Stream Alpha",
@@ -361,6 +501,20 @@
       "providerTxId": "tx_1792707133225",
       "description": "Verified Direct Survey Completion",
       "createdAt": "2026-10-22T22:12:13.226+00:00"
+    },
+    {
+      "providerId": "cpx",
+      "providerName": "Reward River Direct Gateway • Survey Stream Alpha",
+      "sourceType": "survey",
+      "grossAmountCents": 200,
+      "userShareCents": 80,
+      "platformShareCents": 120,
+      "userId": "usr_1792709897734",
+      "userEmail": "worker_test_1792709897734@rewardriver.com",
+      "providerTxId": "tx_1792709898017",
+      "description": "Verified Direct Survey Completion",
+      "id": "pt_84d4364b-bbea-4a0e-9ebf-a9b9a95e1bd1",
+      "createdAt": "2026-10-22T22:58:18.019Z"
     }
   ],
   "withdrawalRequests": [],
