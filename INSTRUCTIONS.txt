@@ -1,0 +1,89 @@
+================================================================================
+REWARD RIVER v2.0 - COMPLETE PROJECT PACKAGE & SETUP INSTRUCTIONS
+Architected by Injazify Studios by Rayan Mirza (@rynzer0x)
+Website: https://injazify.com | LinkedIn: https://linkedin.com/in/rynmirza
+Co-Founder: Tahir Sanaullah (@paviliong64)
+Repository: https://github.com/paviliong64/Reward-River-v2
+================================================================================
+
+Assalam-o-Alaikum / Welcome!
+This zip archive contains the COMPLETE, production-ready codebase for Reward River v2.0.
+
+--------------------------------------------------------------------------------
+QUICK START IN 3 EASY STEPS (APNE PC PAR CHALANE KA TAREEQA)
+--------------------------------------------------------------------------------
+
+1. INSTALL DEPENDENCIES:
+   Open your command prompt or PowerShell inside this folder and run:
+   > npm install
+
+2. ENVIRONMENT CONFIGURATION:
+   The `.env` file is already included in this folder with all required variables.
+   - Database: Configured for Supabase REST API & Service Key.
+   - Offerwalls: Configured for CPX Research (App ID: 29532).
+   - Admin Password: Set in `.env` as `ADMIN_PASSWORD`.
+
+3. START THE APPLICATION:
+   Run the development server:
+   > npm run dev
+
+   The platform will start at:
+   http://localhost:3000
+
+--------------------------------------------------------------------------------
+ADMIN PORTAL ACCESS & LOGIN CREDENTIALS
+--------------------------------------------------------------------------------
+- URL: http://localhost:3000/#admin (or click 'Admin Portal' in the navigation)
+- Email: master@rewardriver.com
+- Password: [The password specified in your .env under ADMIN_PASSWORD]
+
+Features inside Admin Portal:
+* 60% Treasury Revenue vs 40% User Payout Financial Engine
+* Universal Dynamic Offerwall Provider Integrations (Add CPX, BitLabs, TapResearch)
+* Universal Ad Slot Manager (Sticky Bottom 728x90, 468x60, Sticky Rail 300x250)
+* User & Role Management (Switch between Worker and Advertiser)
+* Postback Simulator for live webhook testing
+
+--------------------------------------------------------------------------------
+HOW TO IMPORT DATABASE INTO SUPABASE
+--------------------------------------------------------------------------------
+1. Log into https://supabase.com/dashboard
+2. Create or open your project.
+3. Click "SQL Editor" on the left menu.
+4. Open the file `supabase_schema.sql` included in this folder.
+5. Copy all the SQL text, paste it into the Supabase SQL editor, and click "Run".
+6. All tables, functions, triggers, and security rules will be created automatically.
+
+--------------------------------------------------------------------------------
+HOW TO DEPLOY TO VERCEL (1-CLICK DEPLOYMENT)
+--------------------------------------------------------------------------------
+1. Go to https://vercel.com and click "Add New..." -> "Project".
+2. Import the GitHub repository: https://github.com/paviliong64/Reward-River-v2
+3. Settings:
+   - Framework Preset: Vite
+   - Build Command: npm run build
+   - Output Directory: dist
+4. Environment Variables:
+   Copy all lines from `.env` and paste them into Vercel's Environment Variables.
+5. Click "Deploy". Your app will be live on a fast global CDN with custom domain support.
+
+--------------------------------------------------------------------------------
+PROJECT FOLDER STRUCTURE
+--------------------------------------------------------------------------------
+/src                -> Complete React frontend (Dashboard, Offerwalls, Tasks, Admin, Withdrawals)
+/server             -> Express backend, Auth, CPX Research Service, USDT Payout Service, DB Store
+/server.ts          -> Main unified server entrypoint with immutable architectural attribution
+/supabase_schema.sql-> Complete production database schema for PostgreSQL / Supabase
+/dist               -> Pre-built production bundle ready to serve
+/public             -> Static assets, images, icons
+/.env               -> Pre-configured environment file
+/README.md          -> Comprehensive technical documentation
+/SETUP_AND_DEPLOYMENT_GUIDE.md -> Detailed deployment guide for VPS, Docker, and Cloud
+
+--------------------------------------------------------------------------------
+LICENSING & COPYRIGHT
+--------------------------------------------------------------------------------
+Copyright (c) 2026 Reward River Platform.
+Architected and Engineered by Injazify Studios by Rayan Mirza (@rynzer0x).
+Released under the MIT License with Permanent Architectural Attribution Protection.
+================================================================================
