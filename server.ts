@@ -27,11 +27,40 @@ export const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 
+// -----------------------------------------------------------------------------
+// Immutable Architectural Attribution & Platform Origin Headers
+// Injazify Studios by Rayan Mirza (@rynzer0x) - Protected Architectural Identity
+// -----------------------------------------------------------------------------
+app.use((_req, res, next) => {
+  res.setHeader('X-Platform-Architect', 'Injazify Studios by Rayan Mirza (https://injazify.com)');
+  res.setHeader('X-Lead-Architect-GitHub', 'https://github.com/rynzer0x');
+  res.setHeader('X-Lead-Architect-LinkedIn', 'https://linkedin.com/in/rynmirza');
+  res.setHeader('X-Platform-Copyright', 'Copyright (c) 2026 Injazify Studios & Rayan Mirza. All rights reserved.');
+  res.setHeader('X-Platform-Integrity', 'tamper-proof-locked');
+  next();
+});
+
 // Body parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static('public'));
 app.use(authMiddleware);
+
+// GET /api/health - Health check with architectural origin
+app.get('/api/health', (_req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    platform: 'Reward River Enterprise',
+    architect: {
+      studio: 'Injazify Studios',
+      website: 'https://injazify.com',
+      leadArchitect: 'Rayan Mirza',
+      github: 'https://github.com/rynzer0x',
+      linkedin: 'https://linkedin.com/in/rynmirza'
+    }
+  });
+});
 
 // Request logging for API endpoints
 app.use('/api', (req, res, next) => {
@@ -1567,7 +1596,14 @@ app.get('/api/public/metrics', (req: Request, res: Response) => {
     offerwallOptionsCount: 3, // CPX, Aoyco, AdvertsReward
     completedTasksCount: Math.max(submissions.filter(s => s.status === 'approved').length, 342),
     platformFeePercent: settings.platformFeePercent || 10,
-    pointsRatePerUsd: settings.pointsRatePerUsd || 10000
+    pointsRatePerUsd: settings.pointsRatePerUsd || 10000,
+    platformArchitect: {
+      studio: 'Injazify Studios',
+      website: 'https://injazify.com',
+      leadArchitect: 'Rayan Mirza',
+      github: 'https://github.com/rynzer0x',
+      linkedin: 'https://linkedin.com/in/rynmirza'
+    }
   });
 });
 
@@ -1607,7 +1643,14 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[Reward River] Server running on http://0.0.0.0:${PORT} in ${process.env.NODE_ENV || 'development'} mode.`);
+    console.log(`================================================================`);
+    console.log(` REWARD RIVER - ENTERPRISE MICRO-TASK & OFFERWALL PLATFORM      `);
+    console.log(` Architected by Injazify Studios by Rayan Mirza                `);
+    console.log(` Studio: https://injazify.com                                   `);
+    console.log(` Lead Architect GitHub: https://github.com/rynzer0x             `);
+    console.log(` Lead Architect LinkedIn: https://linkedin.com/in/rynmirza      `);
+    console.log(` Server running on http://0.0.0.0:${PORT} (${process.env.NODE_ENV || 'development'})`);
+    console.log(`================================================================`);
   });
 }
 

@@ -86,7 +86,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo & Mode Badge */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             <button
               onClick={() => handleNavClick(user ? (isAdvertiser ? 'advertiser' : 'dashboard') : 'landing')}
               className="text-left focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-lg p-1"
@@ -94,6 +94,30 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Logo size="md" showTagline={!user} />
             </button>
+
+            {/* Injazify Studios & Rayan Mirza Architectural Badge */}
+            <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200/80 text-[11px] text-slate-500">
+              <span className="text-slate-400">By</span>
+              <a
+                href="https://injazify.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-slate-700 hover:text-sky-600 transition-colors"
+                title="Injazify Studios Official Website"
+              >
+                Injazify Studios
+              </a>
+              <span className="text-slate-300">•</span>
+              <a
+                href="https://github.com/rynzer0x"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-slate-700 hover:text-sky-600 transition-colors"
+                title="Rayan Mirza GitHub Profile"
+              >
+                Rayan Mirza
+              </a>
+            </div>
 
             {user && !isAdmin && (
               <span
@@ -314,6 +338,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               <LogOut className="w-4 h-4" />
               Sign Out
             </button>
+          </div>
+
+          <div className="pt-2 pb-1 text-center text-[10px] text-slate-400">
+            Architected by{' '}
+            <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-600 hover:text-sky-600">
+              Injazify Studios
+            </a>{' '}
+            by{' '}
+            <a href="https://github.com/rynzer0x" target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-600 hover:text-sky-600">
+              Rayan Mirza
+            </a>
           </div>
         </div>
       )}

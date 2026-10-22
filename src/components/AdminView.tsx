@@ -597,7 +597,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
             Reward River Command Center
           </h3>
           <p className="text-xs text-cyan-400 font-semibold mt-1 flex items-center justify-center gap-2 flex-wrap">
-            <span>Architected by <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="hover:underline font-bold text-cyan-300">Injazify Studios</a> by <a href="https://linkedin.com/in/rynmirza" target="_blank" rel="noopener noreferrer" className="hover:underline font-bold text-sky-300 inline-flex items-center gap-1"><Linkedin className="w-3 h-3 text-[#0A66C2]" />Rayan Mirza (@rynmirza)</a></span>
+            <span>Architected by <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="hover:underline font-bold text-cyan-300">Injazify Studios</a> by <a href="https://linkedin.com/in/rynmirza" target="_blank" rel="noopener noreferrer" className="hover:underline font-bold text-sky-300 inline-flex items-center gap-1"><Linkedin className="w-3 h-3 text-[#0A66C2]" />Rayan Mirza (@rynmirza)</a> • <a href="https://github.com/rynzer0x" target="_blank" rel="noopener noreferrer" className="hover:underline font-bold text-slate-200">GitHub (@rynzer0x)</a></span>
           </p>
           <p className="text-xs text-slate-400 mt-2 mb-6">
             Enter authorized administrator credentials to manage providers, ad units, 60/40 treasury, and payouts.
@@ -704,7 +704,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
           <p className="text-xs text-slate-500 mt-1">
             Complete executive portal: 60% Treasury Revenue, Direct Provider Integrations, Universal Ad Manager, 40% User Payouts & Commission Controls.
             <span className="ml-2 font-semibold text-sky-600 inline-flex items-center gap-1.5 flex-wrap">
-              • Built by <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="hover:underline">Injazify Studios</a> by <a href="https://linkedin.com/in/rynmirza" target="_blank" rel="noopener noreferrer" className="text-[#0A66C2] hover:underline inline-flex items-center gap-1"><Linkedin className="w-3 h-3 text-[#0A66C2]" />Rayan Mirza (@rynmirza)</a> (<a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="hover:underline">injazify.com</a>)
+              • Built by <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="hover:underline">Injazify Studios</a> by <a href="https://linkedin.com/in/rynmirza" target="_blank" rel="noopener noreferrer" className="text-[#0A66C2] hover:underline inline-flex items-center gap-1"><Linkedin className="w-3 h-3 text-[#0A66C2]" />Rayan Mirza (@rynmirza)</a> (<a href="https://github.com/rynzer0x" target="_blank" rel="noopener noreferrer" className="text-slate-700 hover:underline">GitHub: @rynzer0x</a> • <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="hover:underline">injazify.com</a>)
             </span>
           </p>
         </div>
