@@ -11,7 +11,8 @@ import {
   Fingerprint,
   Info,
   Globe,
-  ExternalLink
+  ExternalLink,
+  Linkedin
 } from 'lucide-react';
 
 interface SettingsViewProps {
@@ -213,9 +214,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <span>Official Contact & Support Partner</span>
         </h3>
         <p className="text-xs text-slate-600 leading-relaxed">
-          Reward River is proudly developed and supported by <strong>www.injazify.com</strong>. For any support inquiries, platform assistance, or corporate partnerships, please contact us at our official portal.
+          Reward River is proudly developed and supported by <strong>Injazify Studios by Rayan Mirza (www.injazify.com)</strong>. For any support inquiries, platform assistance, corporate partnerships, or executive contacts:
         </p>
-        <div className="pt-1">
+        <div className="pt-1 flex items-center gap-2 flex-wrap">
           <a
             href="https://www.injazify.com"
             target="_blank"
@@ -224,6 +225,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           >
             <span>Visit www.injazify.com</span>
             <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+          <a
+            href="https://linkedin.com/in/rynmirza"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#0A66C2] hover:bg-[#004182] text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+          >
+            <Linkedin className="w-3.5 h-3.5" />
+            <span>Connect on LinkedIn (Rayan Mirza @rynmirza)</span>
           </a>
         </div>
       </div>

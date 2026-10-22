@@ -1,6 +1,6 @@
 import React from 'react';
 import { Logo } from './Logo';
-import { Shield, HelpCircle, FileText, Lock, RefreshCw } from 'lucide-react';
+import { Shield, HelpCircle, FileText, Lock, RefreshCw, Linkedin } from 'lucide-react';
 
 interface FooterProps {
   onOpenLegal: (page: string) => void;
@@ -112,11 +112,21 @@ export const Footer: React.FC<FooterProps> = ({ onOpenLegal, onSelectTab }) => {
           <p>
             <strong className="text-slate-300">Tether (USDT) Stablecoin Disclosures:</strong> Payouts are made in Tether USD (USDT), a cryptocurrency pegged 1:1 to the US dollar. Network transfer fees apply based on your selected blockchain network (TRC-20 or ERC-20). Reward River does not offer investment advice or speculate on crypto markets.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t border-slate-800/60 text-slate-400 gap-2 text-xs">
-            <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t border-slate-800/60 text-slate-400 gap-3 text-xs">
+            <div className="flex items-center gap-2 flex-wrap">
               <span>© {new Date().getFullYear()} Reward River. All rights reserved.</span>
               <span className="text-slate-600">•</span>
-              <span>Architected & Built with precision by <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 font-bold hover:underline transition-colors">Injazify Studios by Rayan Mirza</a> (<a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white hover:underline">injazify.com</a>)</span>
+              <span>Architected & Built with precision by <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 font-bold hover:underline transition-colors">Injazify Studios</a> by <strong className="text-white">Rayan Mirza</strong> (<a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white hover:underline">injazify.com</a>)</span>
+              <a
+                href="https://linkedin.com/in/rynmirza"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0A66C2]/20 hover:bg-[#0A66C2]/30 border border-[#0A66C2]/40 text-sky-300 hover:text-white transition-all text-[11px] font-semibold"
+                title="Rayan Mirza LinkedIn Profile (@rynmirza)"
+              >
+                <Linkedin className="w-3 h-3 text-[#0A66C2]" />
+                <span>Rayan Mirza (@rynmirza)</span>
+              </a>
             </div>
             <span className="text-slate-500">Earn Rewards. Flow Forward.</span>
           </div>

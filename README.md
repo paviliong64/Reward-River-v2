@@ -4,7 +4,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL_17-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
 [![Vercel](https://img.shields.io/badge/Deploy-Vercel_Ready-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
-[![Tailwind CSS 4](https://img.shields.io/badge/Tailwind_CSS-4.0-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Rayan_Mirza_(@rynmirza)-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/rynmirza)
 [![USDT](https://img.shields.io/badge/Settlement-USDT_(TRC20_%2F_ERC20)-26A17B?style=for-the-badge&logo=tether&logoColor=white)](https://tether.to)
 
 > **Reward River** is an enterprise-grade micro-tasks exchange, direct white-labeled survey marketplace, and cryptocurrency rewards platform. Engineered with a pure **Supabase (PostgreSQL 17)** backend, **JobsWorkTech** task workflows, **Reward River Direct Gateway** provider branding, an invisible **60/40 profit margin engine**, and turnkey **Vercel** deployment compatibility.
@@ -17,9 +17,11 @@ This platform is architected, developed, and maintained by **Injazify Studios by
 
 * 🚀 **Injazify Studios**: [www.injazify.com](https://injazify.com)
   * *Official Development Studio, Platform Engineering & Digital Infrastructure*
-* 🛠️ **Rayan Mirza** ([@zeroxnetworks](https://github.com/zeroxnetworks))
+* 🛠️ **Rayan Mirza** ([@rynmirza](https://linkedin.com/in/rynmirza)):
+  * 💼 **LinkedIn**: [linkedin.com/in/rynmirza](https://linkedin.com/in/rynmirza) (`@rynmirza`)
+  * 🐙 **GitHub**: [@zeroxnetworks](https://github.com/zeroxnetworks)
   * *Founder, Lead Systems Architect & Co-Founder*
-* 💡 **Tahir Sanaullah**
+* 💡 **Tahir Sanaullah**:
   * *Product Architect & Co-Founder*
 
 ---
@@ -256,4 +258,4 @@ Reward-River/
 ## ⚖️ License & Copyright
 
 Copyright © 2026 **Reward River**. All rights reserved.  
-Engineered with precision by **[Injazify Studios by Rayan Mirza](https://injazify.com)** ([injazify.com](https://injazify.com)).
+Engineered with precision by **[Injazify Studios by Rayan Mirza](https://injazify.com)** ([injazify.com](https://injazify.com)) • **LinkedIn Profile:** [linkedin.com/in/rynmirza](https://linkedin.com/in/rynmirza) (`@rynmirza`).

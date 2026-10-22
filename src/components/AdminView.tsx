@@ -48,7 +48,8 @@ import {
   ShieldAlert,
   Key,
   Terminal,
-  Activity
+  Activity,
+  Linkedin
 } from 'lucide-react';
 
 interface AdminViewProps {
@@ -595,8 +596,8 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
           <h3 className="text-xl font-black tracking-tight text-white">
             Reward River Command Center
           </h3>
-          <p className="text-xs text-cyan-400 font-semibold mt-1">
-            Architected by Injazify Studios by Rayan Mirza (injazify.com)
+          <p className="text-xs text-cyan-400 font-semibold mt-1 flex items-center justify-center gap-2 flex-wrap">
+            <span>Architected by <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="hover:underline font-bold text-cyan-300">Injazify Studios</a> by <a href="https://linkedin.com/in/rynmirza" target="_blank" rel="noopener noreferrer" className="hover:underline font-bold text-sky-300 inline-flex items-center gap-1"><Linkedin className="w-3 h-3 text-[#0A66C2]" />Rayan Mirza (@rynmirza)</a></span>
           </p>
           <p className="text-xs text-slate-400 mt-2 mb-6">
             Enter authorized administrator credentials to manage providers, ad units, 60/40 treasury, and payouts.
@@ -702,7 +703,9 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
           </h2>
           <p className="text-xs text-slate-500 mt-1">
             Complete executive portal: 60% Treasury Revenue, Direct Provider Integrations, Universal Ad Manager, 40% User Payouts & Commission Controls.
-            <span className="ml-2 font-semibold text-sky-600">• Built by Injazify Studios by Rayan Mirza (injazify.com)</span>
+            <span className="ml-2 font-semibold text-sky-600 inline-flex items-center gap-1.5 flex-wrap">
+              • Built by <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="hover:underline">Injazify Studios</a> by <a href="https://linkedin.com/in/rynmirza" target="_blank" rel="noopener noreferrer" className="text-[#0A66C2] hover:underline inline-flex items-center gap-1"><Linkedin className="w-3 h-3 text-[#0A66C2]" />Rayan Mirza (@rynmirza)</a> (<a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="hover:underline">injazify.com</a>)
+            </span>
           </p>
         </div>
 
@@ -1715,8 +1718,8 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
                     </span>
                     Reward River Defense Shield v2.0
                   </span>
-                  <span className="text-xs text-slate-400">
-                    By Injazify Studios by Rayan Mirza (injazify.com)
+                  <span className="text-xs text-slate-400 inline-flex items-center gap-1.5 flex-wrap">
+                    By <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="hover:underline text-slate-300 font-semibold">Injazify Studios</a> by <a href="https://linkedin.com/in/rynmirza" target="_blank" rel="noopener noreferrer" className="hover:underline text-sky-400 font-semibold inline-flex items-center gap-1"><Linkedin className="w-3 h-3 text-[#0A66C2]" />Rayan Mirza (@rynmirza)</a>
                   </span>
                 </div>
                 <h3 className="text-xl font-black tracking-tight text-white flex items-center gap-2">

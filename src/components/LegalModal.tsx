@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, FileText, Mail, Globe, ExternalLink } from 'lucide-react';
+import { X, FileText, Mail, Globe, ExternalLink, Linkedin } from 'lucide-react';
 
 interface LegalModalProps {
   page: string | null;
@@ -126,19 +126,30 @@ export const LegalModal: React.FC<LegalModalProps> = ({ page, onClose }) => {
               <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 space-y-3 mt-2">
                 <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
                   <Globe className="w-4 h-4 text-emerald-600" />
-                  <span>Official Support & Contact Portal:</span>
+                  <span>Official Support & Platform Architects:</span>
                 </div>
-                <a
-                  href="https://www.injazify.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition-all shadow-xs"
-                >
-                  <span>www.injazify.com</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <a
+                    href="https://www.injazify.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition-all shadow-xs"
+                  >
+                    <span>www.injazify.com</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                  <a
+                    href="https://linkedin.com/in/rynmirza"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0A66C2] hover:bg-[#004182] text-white font-bold text-xs rounded-xl transition-all shadow-xs"
+                  >
+                    <Linkedin className="w-3.5 h-3.5" />
+                    <span>Rayan Mirza (@rynmirza)</span>
+                  </a>
+                </div>
                 <p className="text-slate-600 text-[11px] leading-relaxed">
-                  All platform support, account inquiries, survey dispute reviews, and technical assistance are managed via <strong>www.injazify.com</strong>.
+                  All platform architecture, enterprise integrations, and support are managed by <strong>Injazify Studios by Rayan Mirza</strong> (<a href="https://linkedin.com/in/rynmirza" target="_blank" rel="noopener noreferrer" className="text-[#0A66C2] hover:underline font-bold">LinkedIn: @rynmirza</a>).
                 </p>
               </div>
             </>
