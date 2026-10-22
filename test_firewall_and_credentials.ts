@@ -63,7 +63,7 @@ async function runFirewallAndCredentialsTest() {
   console.log('\n[4] Testing Admin Credentials Vault & Cryptographic Rotation...');
   let admin = dbStore.getUserByEmail('admin@rewardriver.com');
   if (!admin) {
-    admin = dbStore.getAllUsers().find(u => u.role === 'admin') || null;
+    admin = dbStore.getAllUsers().find(u => u.role === 'admin');
   }
   if (!admin) throw new Error('Admin user not found in database.');
 
