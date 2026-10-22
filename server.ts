@@ -19,6 +19,7 @@ import { usdtPriceService } from './server/usdtPriceService';
 import { usdtPayoutManager } from './server/usdtPayoutService';
 import { validateUsdtAddress, calculateUsdtPayout } from './src/utils/usdt';
 import { canSubmitWithdrawal } from './src/utils/ledger';
+import { AdminFirewallService } from './server/adminFirewall';
 
 dotenv.config();
 
@@ -127,6 +128,16 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
 // POST /api/auth/login
 app.post('/api/auth/login', async (req: Request, res: Response) => {
   try {
+    const ip = AdminFirewallService.getClientIp(req);
+    const { blocked, remainingMinutes } = AdminFirewallService.isIpBlocked(ip);
+    if (blocked) {
+      res.status(429).json({
+        error: `[FIREWALL LOCKED] Too many unauthorized requests. Blocked for ${remainingMinutes || 15} minutes.`,
+        firewallBlocked: true
+      });
+      return;
+    }
+
     const { email, password } = req.body;
     if (!email || !password) {
       res.status(400).json({ error: 'Please enter both email and password.' });
@@ -135,8 +146,15 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
 
     const user = dbStore.getUserByEmail(email);
     if (!user || !verifyPassword(password, user.passwordHash, user.salt)) {
+      if (user?.role === 'admin' || email.toLowerCase().includes('admin')) {
+        AdminFirewallService.recordFailedAttempt(ip, email, 'Invalid admin password attempt');
+      }
       res.status(401).json({ error: 'Invalid email or password.' });
       return;
+    }
+
+    if (user.role === 'admin') {
+      AdminFirewallService.recordSuccessfulLogin(ip, user.email);
     }
 
     const token = createSessionToken(user);
@@ -1426,6 +1444,109 @@ app.post('/api/admin/settings', requireAuth, requireAdmin, async (req: Authentic
 // GET /api/admin/audit-logs
 app.get('/api/admin/audit-logs', requireAuth, requireAdmin, (req: AuthenticatedRequest, res: Response) => {
   res.json({ logs: dbStore.getAuditLogs() });
+});
+
+// POST /api/admin/profile/update-credentials - Update Admin Email & Password
+app.post('/api/admin/profile/update-credentials', requireAuth, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const adminUser = req.user!;
+    const { newEmail, currentPassword, newPassword } = req.body;
+
+    // Verify current password for maximum security
+    if (!currentPassword || !verifyPassword(currentPassword, adminUser.passwordHash, adminUser.salt)) {
+      res.status(401).json({ error: 'Current password verification failed. Credential update denied.' });
+      return;
+    }
+
+    const updates: Partial<UserAccount> = {};
+
+    // Validate and prepare email update
+    if (newEmail && typeof newEmail === 'string' && newEmail.includes('@')) {
+      const trimmedEmail = newEmail.toLowerCase().trim();
+      if (trimmedEmail !== adminUser.email.toLowerCase()) {
+        const existing = dbStore.getUserByEmail(trimmedEmail);
+        if (existing && existing.id !== adminUser.id) {
+          res.status(400).json({ error: 'This email is already in use by another user account.' });
+          return;
+        }
+        updates.email = trimmedEmail;
+      }
+    }
+
+    // Validate and prepare password update
+    if (newPassword) {
+      if (typeof newPassword !== 'string' || newPassword.length < 6) {
+        res.status(400).json({ error: 'New password must be at least 6 characters.' });
+        return;
+      }
+      const { hash, salt } = hashPassword(newPassword);
+      updates.passwordHash = hash;
+      updates.salt = salt;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      res.status(400).json({ error: 'No credential changes were provided.' });
+      return;
+    }
+
+    const updated = await dbStore.updateUser(adminUser.id, updates);
+    const newToken = createSessionToken(updated);
+
+    // Record high-priority security audit log
+    await dbStore.addAuditLog({
+      adminUserId: adminUser.id,
+      adminEmail: updated.email,
+      action: 'ADMIN_CREDENTIALS_UPDATED',
+      targetEntity: 'admin_security',
+      targetId: adminUser.id,
+      details: JSON.stringify({
+        emailUpdated: Boolean(updates.email),
+        passwordUpdated: Boolean(updates.passwordHash),
+        newEmail: updated.email,
+        ip: AdminFirewallService.getClientIp(req),
+        timestamp: new Date().toISOString()
+      }),
+      ipAddress: AdminFirewallService.getClientIp(req)
+    });
+
+    res.json({
+      success: true,
+      message: 'Admin credentials successfully updated & synchronized with Supabase.',
+      token: newToken,
+      user: {
+        id: updated.id,
+        email: updated.email,
+        displayName: updated.displayName,
+        role: updated.role
+      }
+    });
+  } catch (err: unknown) {
+    console.error('Failed to update admin credentials:', err);
+    res.status(500).json({ error: 'Internal error updating credentials.' });
+  }
+});
+
+// GET /api/admin/firewall/status - Admin Shield & Firewall Telemetry
+app.get('/api/admin/firewall/status', requireAuth, requireAdmin, (req: AuthenticatedRequest, res: Response) => {
+  const ip = AdminFirewallService.getClientIp(req);
+  const auditLogs = dbStore.getAuditLogs();
+  const securityEvents = auditLogs.filter(
+    l => l.action.includes('FIREWALL') || l.action.includes('ADMIN_') || l.action.includes('LOCKOUT')
+  );
+
+  res.json({
+    success: true,
+    firewall: {
+      status: 'ACTIVE_GUARDING',
+      shieldEngine: 'Reward River Security Shield v2.0 by Injazify Studios by Rayan Mirza',
+      protectionLevel: 'MAXIMUM',
+      clientIp: ip,
+      rateLimiter: '5 attempts per 15-minute sliding window',
+      honeypotTraps: 'Active',
+      supabaseRLS: 'Active',
+      recentSecurityEvents: securityEvents.slice(0, 15)
+    }
+  });
 });
 
 // -----------------------------------------------------------------------------

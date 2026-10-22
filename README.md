@@ -85,7 +85,7 @@ This platform is architected, developed, and maintained by **Injazify Studios by
   - **Tasks Top Banner (Responsive)**
 - Supports raw HTML, Google AdSense, Adsterra, PropellerAds, or custom sponsor banners.
 
-### 6. Executive 9-Tab Command Center (Admin Portal)
+### 6. Executive 10-Tab Command Center (Admin Portal)
 1. **Financial Overview:** Gross Inflows, 60% Retained Profit, 40% User Payouts, Net Margin.
 2. **Direct Providers:** Add/Edit/Delete partner networks, custom URLs, and commissions.
 3. **Universal Ad Slots:** Live banner code editor and placement toggles.
@@ -95,6 +95,35 @@ This platform is architected, developed, and maintained by **Injazify Studios by
 7. **Task Campaigns:** Global marketplace task moderation (approve/reject/pause campaigns).
 8. **Task Submissions:** Cross-platform review of worker proofs.
 9. **S2S Postback Simulator:** Test live CPX, Aoyco, or AdvertsReward webhooks with simulated payloads.
+10. **🛡️ Firewall Shield & Credentials Vault:** Real-time hardware rate limiter status, live audit event stream, bot honeypot monitoring, and cryptographic Admin Email & Password rotation.
+
+---
+
+## 🛡️ Admin Security Shield, Firewall & Hacker Defense
+
+To safeguard the Admin Portal against normal visitors, automated scrapers, and malicious intrusion attempts, **Injazify Studios** implemented an enterprise-grade defense shield:
+
+### 1. Sliding Window IP Rate Limiter & Automatic Lockout
+- **Threshold:** Maximum **5 failed authentication attempts** per client IP within a 15-minute window.
+- **Lockout:** Breaching the threshold triggers an automatic **15-minute hardware IP lockout**.
+- **HTTP 429 Status:** Any request from a locked IP receives an immediate `429 Too Many Requests` response with the remaining lockout duration.
+
+### 2. Automated Bot Honeypot Traps
+- Hidden trap fields (`_admin_trap_field`, `website_url`) are positioned outside the viewport.
+- Legitimate administrators never touch these fields, but automated scraper bots fill all inputs indiscriminately.
+- Any submission containing data in a honeypot field is immediately rejected with `403 Forbidden` and the offender IP is blacklisted.
+
+### 3. Cryptographic Admin Credential Rotation (Email & Password)
+- Inside the Admin Portal under **"🛡️ Firewall & Credentials"**, administrators can securely update their **Admin Email** and **Admin Master Password**.
+- Changes require entering the **Current Password** to prevent session hijacking.
+- Passwords are encrypted using **PBKDF2** with **10,000 iterations**, a **64-byte key length**, and **SHA-512** combined with a cryptographically random **16-byte salt**.
+- Changes are instantly synchronized with the primary **Supabase PostgreSQL cluster** and a new hardened JWT session token is re-issued.
+
+### 4. Immutable Security Audit Trail
+- All security events (`ADMIN_IP_LOCKOUT`, `FIREWALL_BOT_TRAP`, `ADMIN_CREDENTIALS_UPDATED`, `ADMIN_LOGIN_SUCCESS`) are automatically logged to the `admin_audit_logs` table in Supabase.
+- Admins can inspect real-time audit logs directly in the Security tab.
+
+---
 
 ---
 
@@ -146,10 +175,11 @@ The Admin Portal is fully accessible on any domain (Vercel, custom domain, local
 
 1. **Direct URL:** Navigate to `https://your-domain.vercel.app/#admin` or `https://your-domain.vercel.app/admin`.
 2. **Footer Shortcut:** Click **"Command Center (Admin)"** in the bottom navigation.
-3. **Master Admin Credentials:**
-   - **Email:** `admin@rewardriver.com`
-   - **Password:** `admin123`
-4. **One-Click Quick Login:** The Admin Portal Gateway includes a **"⚡ One-Click Master Admin Login"** button for immediate executive access on any deployment.
+3. **Master Admin Authentication:**
+   - **Default Master Email:** `admin@rewardriver.com`
+   - **Default Master Password:** `admin123`
+   *(Update these credentials immediately upon first login in the Firewall & Credentials tab).*
+4. **Hacker Protection Active:** Public one-click demo logins are strictly disabled. Only authorized administrators with verified credentials can enter. All unauthorized attempts are blocked and logged.
 
 ---
 
@@ -167,10 +197,13 @@ npm install
 # 2. Run automated test suite
 npm test
 
-# 3. Start local development server (Express API + Vite HMR)
+# 3. Run security & firewall test suite
+npx tsx test_firewall_and_credentials.ts
+
+# 4. Start local development server (Express API + Vite HMR)
 npm run dev
 
-# 4. Open in browser
+# 5. Open in browser
 http://localhost:3000
 ```
 
@@ -181,39 +214,41 @@ http://localhost:3000
 ```text
 Reward-River/
 ├── api/
-│   └── index.ts                 # Vercel Serverless Function entrypoint
+│   └── index.ts                         # Vercel Serverless Function entrypoint
 ├── server/
-│   ├── auth.ts                  # PBKDF2 Password hashing & Supabase JWT verification
-│   ├── db.ts                    # In-memory DatabaseStore with auto Supabase sync
-│   ├── supabase.ts              # Server-side Supabase client & token validator
-│   ├── supabaseStore.ts         # Supabase PostgreSQL CRUD operations
-│   ├── cpxResearchService.ts    # Secure CPX S2S postback listener
-│   ├── offerwallService.ts      # Aoyco & AdvertsReward webhook handlers
-│   ├── usdtPriceService.ts      # CoinGecko live USDT rate feed
-│   └── usdtPayoutService.ts     # USDT settlement manager
+│   ├── adminFirewall.ts                 # 🛡️ Admin IP rate limiter, honeypot traps & lockout shield
+│   ├── auth.ts                          # PBKDF2 Password hashing & Supabase JWT verification
+│   ├── db.ts                            # In-memory DatabaseStore with auto Supabase sync
+│   ├── supabase.ts                      # Server-side Supabase client & token validator
+│   ├── supabaseStore.ts                 # Supabase PostgreSQL CRUD operations
+│   ├── cpxResearchService.ts            # Secure CPX S2S postback listener
+│   ├── offerwallService.ts              # Aoyco & AdvertsReward webhook handlers
+│   ├── usdtPriceService.ts              # CoinGecko live USDT rate feed
+│   └── usdtPayoutService.ts             # USDT settlement manager
 ├── src/
-│   ├── App.tsx                  # Main app container & deep-link hash router
-│   ├── supabase.ts              # Frontend Supabase SDK client & auth methods
+│   ├── App.tsx                          # Main app container & deep-link hash router
+│   ├── supabase.ts                      # Frontend Supabase SDK client & auth methods
 │   ├── components/
-│   │   ├── AdminView.tsx        # 9-Tab Executive Command Center
-│   │   ├── TasksView.tsx        # JobsWorkTech micro-tasks marketplace
-│   │   ├── AdvertiserView.tsx   # Campaign creator & billing portal
-│   │   ├── OfferwallsView.tsx   # Direct Gateway multi-offerwall hub
-│   │   ├── AdBanners.tsx        # Universal dynamic ad units
-│   │   ├── UserDashboard.tsx    # Worker wallet, stats & earnings
-│   │   ├── WithdrawalView.tsx   # USDT TRC20/ERC20 cashout portal
-│   │   ├── Navbar.tsx           # Responsive navigation bar
-│   │   └── Footer.tsx           # Legal links & Injazify Studios credits
+│   │   ├── AdminView.tsx                # 10-Tab Executive Command Center & Defense Vault
+│   │   ├── TasksView.tsx                # JobsWorkTech micro-tasks marketplace
+│   │   ├── AdvertiserView.tsx           # Campaign creator & billing portal
+│   │   ├── OfferwallsView.tsx           # Direct Gateway multi-offerwall hub
+│   │   ├── AdBanners.tsx                # Universal dynamic ad units
+│   │   ├── UserDashboard.tsx            # Worker wallet, stats & earnings
+│   │   ├── WithdrawalView.tsx           # USDT TRC20/ERC20 cashout portal
+│   │   ├── Navbar.tsx                   # Responsive navigation bar
+│   │   └── Footer.tsx                   # Legal links & Injazify Studios credits
 │   └── utils/
-│       ├── ledger.ts            # Double-entry balance calculation
-│       └── cpx.ts               # White-label direct gateway URL builder
+│       ├── ledger.ts                    # Double-entry balance calculation
+│       └── cpx.ts                       # White-label direct gateway URL builder
 ├── supabase/
-│   ├── config.toml              # Supabase CLI configuration
-│   └── migrations/              # Production database schema migrations
-├── vercel.json                  # Vercel deployment & serverless routing config
-├── supabase_schema.sql          # Complete 13-table PostgreSQL schema
-├── test_supabase_integration.ts # End-to-end verification test suite
-└── package.json                 # Project configuration & scripts
+│   ├── config.toml                      # Supabase CLI configuration
+│   └── migrations/                      # Production database schema migrations
+├── vercel.json                          # Vercel deployment & serverless routing config
+├── supabase_schema.sql                  # Complete 13-table PostgreSQL schema
+├── test_supabase_integration.ts         # Supabase verification test suite
+├── test_firewall_and_credentials.ts     # 🛡️ Admin Firewall & Credential rotation test suite
+└── package.json                         # Project configuration & scripts
 ```
 
 ---

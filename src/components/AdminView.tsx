@@ -44,7 +44,11 @@ import {
   CreditCard,
   Copy,
   Check,
-  Lock
+  Lock,
+  ShieldAlert,
+  Key,
+  Terminal,
+  Activity
 } from 'lucide-react';
 
 interface AdminViewProps {
@@ -59,7 +63,7 @@ interface AdminViewProps {
 export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLoginSuccess }: AdminViewProps) {
   const triggerRefresh = onRefreshAll || onDataChanged || (() => {});
   const [activeSubTab, setActiveSubTab] = useState<
-    'financials' | 'providers' | 'ads' | 'commissions' | 'withdrawals' | 'users' | 'campaigns' | 'submissions' | 'simulator'
+    'financials' | 'providers' | 'ads' | 'commissions' | 'withdrawals' | 'users' | 'campaigns' | 'submissions' | 'simulator' | 'security'
   >('financials');
 
   const [financials, setFinancials] = useState<FinancialSummary | null>(null);
@@ -104,11 +108,107 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
   // Image Preview Modal
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  // Admin Portal Gate State
-  const [adminEmail, setAdminEmail] = useState('admin@rewardriver.com');
-  const [adminPassword, setAdminPassword] = useState('admin123');
+  // Admin Credentials Update State
+  const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [currentAdminPassword, setCurrentAdminPassword] = useState('');
+  const [newAdminPassword, setNewAdminPassword] = useState('');
+  const [confirmAdminPassword, setConfirmAdminPassword] = useState('');
+  const [credLoading, setCredLoading] = useState(false);
+  const [credMsg, setCredMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  // Firewall Telemetry State
+  const [firewallData, setFirewallData] = useState<any>(null);
+  const [firewallLoading, setFirewallLoading] = useState(false);
+
+  // Admin Portal Gate State (Protected by Firewall & Shield)
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminTrapField, setAdminTrapField] = useState('');
   const [adminLoginLoading, setAdminLoginLoading] = useState(false);
   const [adminLoginError, setAdminLoginError] = useState<string | null>(null);
+
+  const fetchFirewallStatus = async () => {
+    setFirewallLoading(true);
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch('/api/admin/firewall/status', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFirewallData(data.firewall);
+      }
+    } catch (err) {
+      console.error('Failed to load firewall telemetry:', err);
+    } finally {
+      setFirewallLoading(false);
+    }
+  };
+
+  const handleUpdateAdminCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCredMsg(null);
+
+    if (!currentAdminPassword) {
+      setCredMsg({ text: 'Current password is required to authorize credentials update.', type: 'error' });
+      return;
+    }
+
+    if (newAdminPassword && newAdminPassword !== confirmAdminPassword) {
+      setCredMsg({ text: 'New password and confirmation password do not match.', type: 'error' });
+      return;
+    }
+
+    if (!newAdminEmail && !newAdminPassword) {
+      setCredMsg({ text: 'Please enter a new email or new password to update.', type: 'error' });
+      return;
+    }
+
+    setCredLoading(true);
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch('/api/admin/profile/update-credentials', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          currentPassword: currentAdminPassword,
+          newEmail: newAdminEmail ? newAdminEmail.trim() : undefined,
+          newPassword: newAdminPassword ? newAdminPassword : undefined
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update admin credentials.');
+      }
+
+      setCredMsg({ text: data.message || 'Credentials updated successfully!', type: 'success' });
+      if (data.token) {
+        localStorage.setItem('rr_auth_token', data.token);
+      }
+      setCurrentAdminPassword('');
+      setNewAdminPassword('');
+      setConfirmAdminPassword('');
+      setNewAdminEmail('');
+
+      fetchAdminData();
+      fetchFirewallStatus();
+      if (onAdminLoginSuccess && data.user) {
+        onAdminLoginSuccess({
+          user: data.user,
+          balances: {},
+          token: data.token
+        });
+      }
+    } catch (err: any) {
+      setCredMsg({ text: err.message || 'Update failed', type: 'error' });
+    } finally {
+      setCredLoading(false);
+    }
+  };
 
   const handleAdminLogin = async (e?: React.FormEvent, customEmail?: string, customPass?: string) => {
     if (e) e.preventDefault();
@@ -120,7 +220,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password, _admin_trap_field: adminTrapField })
       });
       const data = await res.json();
       if (!res.ok) {
@@ -179,6 +279,12 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
   useEffect(() => {
     fetchAdminData();
   }, []);
+
+  useEffect(() => {
+    if (activeSubTab === 'security') {
+      fetchFirewallStatus();
+    }
+  }, [activeSubTab]);
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -497,56 +603,84 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
           </p>
 
           {adminLoginError && (
-            <div className="mb-4 p-3 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-300 text-xs text-left">
-              {adminLoginError}
+            <div className="mb-4 p-3.5 rounded-xl bg-rose-950/70 border border-rose-800/80 text-rose-300 text-xs text-left flex items-start gap-2.5 shadow-md">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold block">Access Denied / Security Shield Warning:</span>
+                <span>{adminLoginError}</span>
+              </div>
             </div>
           )}
 
+          <div className="mb-4 px-3 py-2 rounded-xl bg-slate-800/80 border border-cyan-500/30 flex items-center justify-between text-left">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <span className="text-[11px] font-bold text-slate-200">Hardware Firewall & IP Rate Limiter Active</span>
+            </div>
+            <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800">
+              5-Try Lockout
+            </span>
+          </div>
+
           <form onSubmit={(e) => handleAdminLogin(e)} className="space-y-4 text-left">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Admin Email</label>
+            {/* Honeypot field for bot/scraper traps */}
+            <div style={{ display: 'none', position: 'absolute', left: '-9999px' }} aria-hidden="true">
               <input
-                type="email"
-                value={adminEmail}
-                onChange={(e) => setAdminEmail(e.target.value)}
-                required
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/90 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                name="_admin_trap_field"
+                value={adminTrapField}
+                onChange={(e) => setAdminTrapField(e.target.value)}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Admin Password</label>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Admin Email</label>
+              <input
+                type="email"
+                placeholder="master@rewardriver.com"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+                required
+                autoComplete="username"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/90 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 placeholder-slate-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Admin Master Password</label>
               <input
                 type="password"
+                placeholder="••••••••••••"
                 value={adminPassword}
                 onChange={(e) => setAdminPassword(e.target.value)}
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/90 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                autoComplete="current-password"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/90 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 placeholder-slate-500"
               />
             </div>
 
             <button
               type="submit"
               disabled={adminLoginLoading}
-              className="w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 font-bold text-sm text-white shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-sky-600 hover:from-cyan-500 hover:to-sky-500 font-bold text-sm text-white shadow-lg transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {adminLoginLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-              <span>Authenticate to Command Center</span>
+              <span>Verify Credentials & Enter Command Center</span>
             </button>
           </form>
 
-          <div className="mt-5 pt-5 border-t border-slate-800">
-            <button
-              type="button"
-              onClick={() => handleAdminLogin(undefined, 'admin@rewardriver.com', 'admin123')}
-              disabled={adminLoginLoading}
-              className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-cyan-300 transition flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
-              <span>⚡ One-Click Master Admin Login (Demo / Vercel)</span>
-            </button>
-            <p className="text-[11px] text-slate-500 mt-2">
-              Default credentials: <code className="text-slate-400">admin@rewardriver.com</code> / <code className="text-slate-400">admin123</code>
+          <div className="mt-5 pt-4 border-t border-slate-800/90 text-left">
+            <div className="flex items-center gap-2 text-[11px] text-slate-400">
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span>Strict Security Enforcement Notice:</span>
+            </div>
+            <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">
+              Normal visitors, bots, and unauthorized IP addresses are automatically blocked upon exceeding 5 failed attempts within 15 minutes. All events are written directly to immutable Supabase audit logs.
             </p>
           </div>
         </div>
@@ -760,6 +894,18 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
           <span>1-Click Postback Simulator</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('security')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+            activeSubTab === 'security'
+              ? 'bg-rose-950 text-rose-300 border border-rose-800 shadow-sm'
+              : 'text-rose-700 bg-rose-50/70 hover:bg-rose-100/80 border border-rose-200/60'
+          }`}
+        >
+          <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+          <span>🛡️ Firewall & Credentials</span>
         </button>
       </div>
 
@@ -1547,6 +1693,271 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
               </pre>
             </div>
           )}
+        </div>
+      )}
+
+      {/* TAB 10: FIREWALL SHIELD & CREDENTIALS */}
+      {activeSubTab === 'security' && (
+        <div className="space-y-6">
+          {/* Header Card */}
+          <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-rose-950 rounded-2xl border border-rose-900/40 p-6 text-white shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+              <ShieldAlert className="w-48 h-48 text-rose-500" />
+            </div>
+
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[11px] font-bold tracking-wide uppercase flex items-center gap-1.5">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                    </span>
+                    Reward River Defense Shield v2.0
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    By Injazify Studios by Rayan Mirza (injazify.com)
+                  </span>
+                </div>
+                <h3 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
+                  <ShieldCheck className="w-6 h-6 text-emerald-400" />
+                  <span>Admin Firewall & Master Credentials Vault</span>
+                </h3>
+                <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                  Military-grade security enforcement: Unauthorized visitors, brute-force attacks, and automated scraper bots are neutralized with 5-attempt sliding rate limiting, honeypot traps, and PBKDF2 SHA-512 cryptographic salting synchronized with Supabase.
+                </p>
+              </div>
+
+              <button
+                onClick={fetchFirewallStatus}
+                disabled={firewallLoading}
+                className="px-4 py-2.5 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-white shadow transition flex items-center gap-2 shrink-0 cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${firewallLoading ? 'animate-spin' : ''}`} />
+                <span>Refresh Firewall Telemetry</span>
+              </button>
+            </div>
+
+            {/* Defense Telemetry Badges */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-slate-800/80">
+              <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                <span className="text-[10px] text-slate-400 font-semibold block uppercase">Shield Status</span>
+                <span className="text-xs font-black text-emerald-400 flex items-center gap-1 mt-0.5">
+                  <Activity className="w-3.5 h-3.5" />
+                  <span>Active & Guarding</span>
+                </span>
+              </div>
+
+              <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                <span className="text-[10px] text-slate-400 font-semibold block uppercase">Rate Limiter</span>
+                <span className="text-xs font-black text-cyan-400 block mt-0.5">
+                  5 Attempts / 15m Lockout
+                </span>
+              </div>
+
+              <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                <span className="text-[10px] text-slate-400 font-semibold block uppercase">Honeypot Traps</span>
+                <span className="text-xs font-black text-amber-400 block mt-0.5">
+                  Active (Bot Trapfield)
+                </span>
+              </div>
+
+              <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                <span className="text-[10px] text-slate-400 font-semibold block uppercase">Database Layer</span>
+                <span className="text-xs font-black text-indigo-400 block mt-0.5">
+                  Supabase RLS & PBKDF2
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* CREDENTIAL UPDATE CARD */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
+                  <Key className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 text-sm">Update Administrator Credentials</h4>
+                  <p className="text-[11px] text-slate-500">Change your master email address or password</p>
+                </div>
+              </div>
+
+              {credMsg && (
+                <div
+                  className={`p-3.5 rounded-xl border text-xs flex items-start gap-2 ${
+                    credMsg.type === 'success'
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      : 'bg-rose-50 border-rose-200 text-rose-800'
+                  }`}
+                >
+                  {credMsg.type === 'success' ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  )}
+                  <span>{credMsg.text}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleUpdateAdminCredentials} className="space-y-4">
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-600">
+                  <span className="font-bold text-slate-800 block mb-0.5">Current Signed-in Account:</span>
+                  <span className="font-mono text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
+                    {adminUser?.email || 'admin@rewardriver.com'}
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    New Administrator Email Address (Optional)
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="Enter new email if changing"
+                    value={newAdminEmail}
+                    onChange={e => setNewAdminEmail(e.target.value)}
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  />
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">
+                    Leave blank if you only want to change your password.
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      New Password (Optional)
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="Min 6 characters"
+                      value={newAdminPassword}
+                      onChange={e => setNewAdminPassword(e.target.value)}
+                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Confirm New Password
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="Re-type new password"
+                      value={confirmAdminPassword}
+                      onChange={e => setConfirmAdminPassword(e.target.value)}
+                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100">
+                  <label className="block text-xs font-bold text-rose-700 mb-1">
+                    Current Password (Required for Authorization)
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Type your current password to authorize changes"
+                    value={currentAdminPassword}
+                    onChange={e => setCurrentAdminPassword(e.target.value)}
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-rose-300 bg-rose-50/30 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  />
+                  <span className="text-[10px] text-slate-400 mt-1 block">
+                    Required by Reward River Security Shield to prevent unauthorized hijacking.
+                  </span>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={credLoading}
+                  className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-sm"
+                >
+                  {credLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Lock className="w-3.5 h-3.5 text-emerald-400" />}
+                  <span>Apply & Synchronize Credentials with Supabase</span>
+                </button>
+              </form>
+            </div>
+
+            {/* LIVE FIREWALL & SECURITY AUDIT LOG */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                    <Terminal className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-sm">Live Firewall Audit Stream</h4>
+                    <p className="text-[11px] text-slate-500">Real-time intrusion detection and authentication log</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-slate-400 block">Your Current IP:</span>
+                  <span className="text-xs font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded">
+                    {firewallData?.clientIp || '127.0.0.1'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-xs font-bold text-slate-700 block">Security Audit Events:</span>
+                <div className="max-h-[360px] overflow-y-auto space-y-2 pr-1">
+                  {firewallData?.recentSecurityEvents && firewallData.recentSecurityEvents.length > 0 ? (
+                    firewallData.recentSecurityEvents.map((ev: any) => (
+                      <div
+                        key={ev.id}
+                        className={`p-3 rounded-xl border text-xs font-mono space-y-1 ${
+                          ev.action.includes('LOCKOUT') || ev.action.includes('ALERT')
+                            ? 'bg-rose-50/70 border-rose-200 text-rose-900'
+                            : ev.action.includes('SUCCESS')
+                            ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
+                            : 'bg-slate-50 border-slate-200 text-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold">{ev.action}</span>
+                          <span className="text-[10px] text-slate-500 font-sans">
+                            {new Date(ev.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-600 flex items-center gap-2">
+                          <span>IP: <code className="font-bold">{ev.ipAddress || 'unknown'}</code></span>
+                          <span>Admin: <code className="font-bold">{ev.adminEmail || 'N/A'}</code></span>
+                        </div>
+                        {ev.details && (
+                          <div className="text-[10px] text-slate-500 bg-white/80 p-1.5 rounded border border-slate-200 overflow-x-auto">
+                            {ev.details}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-6 text-center text-slate-400 bg-slate-50 rounded-xl border border-slate-100">
+                      <ShieldCheck className="w-8 h-8 mx-auto text-emerald-500/60 mb-2" />
+                      <p className="text-xs font-semibold text-slate-600">Firewall Shield Active & Clean</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        No malicious intrusions or rate limit lockouts detected. All systems nominal.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-3 bg-slate-900 text-white rounded-xl text-[11px] space-y-1">
+                <div className="flex items-center gap-1.5 text-cyan-400 font-bold">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Permanent Firewall Rules Active:</span>
+                </div>
+                <ul className="text-slate-300 list-disc list-inside space-y-0.5 text-[10px]">
+                  <li>Maximum 5 failed attempts per IP address per 15 minutes.</li>
+                  <li>Automated bot honeypot traps trigger immediate IP rejection.</li>
+                  <li>PBKDF2 SHA-512 password hashing with 10,000 iterations & random salt.</li>
+                  <li>Supabase cloud database backup with Row Level Security.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
