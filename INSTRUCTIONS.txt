@@ -55,6 +55,22 @@ HOW TO IMPORT DATABASE INTO SUPABASE
 6. All tables, functions, triggers, and security rules will be created automatically.
 
 --------------------------------------------------------------------------------
+HOW TO ENABLE GOOGLE OAUTH IN SUPABASE (ONE-CLICK LOGIN)
+--------------------------------------------------------------------------------
+1. Go to Google Cloud Console (https://console.cloud.google.com/apis/credentials).
+2. Create an "OAuth 2.0 Client ID" (Application type: Web application).
+3. Under "Authorized redirect URIs", paste this exact Supabase callback URL:
+   https://vwoskusxfzmnoawbrpnr.supabase.co/auth/v1/callback
+4. Copy the generated "Client ID" and "Client Secret".
+5. In your Supabase Dashboard:
+   Navigate to: Authentication -> Providers -> Google
+   - Switch Google to "Enabled" (ON).
+   - Paste your "Client ID" and "Client Secret".
+   - Click "Save".
+6. Google Login is now 100% active and configured!
+
+
+--------------------------------------------------------------------------------
 HOW TO DEPLOY TO VERCEL (1-CLICK DEPLOYMENT)
 --------------------------------------------------------------------------------
 1. Go to https://vercel.com and click "Add New..." -> "Project".

@@ -81,12 +81,50 @@
       "emailVerified": true,
       "role": "user",
       "externalOpaqueId": "opaque_1792709897734",
-      "createdAt": "2026-10-22T22:58:17.734Z",
-      "updatedAt": "2026-10-22T22:58:19.194Z",
+      "phoneNumber": null,
+      "whatsappNumber": null,
+      "countryCode": "US",
+      "provider": "supabase",
+      "advertiserBalanceCents": 780,
+      "hasPromptedPhone": false,
+      "createdAt": "2026-10-22T22:58:16.876109+00:00",
+      "updatedAt": "2026-10-22T22:58:19.195+00:00"
+    },
+    {
+      "id": "usr_1792713098170",
+      "email": "worker_test_1792713098170@rewardriver.com",
+      "passwordHash": "dummy_hash",
+      "salt": "dummy_salt",
+      "displayName": "Test Supabase Worker",
+      "emailVerified": true,
+      "role": "user",
+      "externalOpaqueId": "opaque_1792713098170",
+      "createdAt": "2026-10-22T23:51:38.170Z",
+      "updatedAt": "2026-10-22T23:51:39.851Z",
       "advertiserBalanceCents": 780
     }
   ],
   "rewardLedger": [
+    {
+      "id": "ledg_4f157f24-3c4d-4f71-af79-d1a2374fb29b",
+      "userId": "usr_1792709897734",
+      "providerTxId": "task_task_42b70ca9-33f5-44d0-bc98-839789a28efa_sub_3c3f7b26-d58f-4d88-933b-63ca64c715df",
+      "amountCents": 10,
+      "entryType": "credit",
+      "status": "confirmed",
+      "description": "Completed Task: \"Visit Reward River Telegram & Join Community\" (1,000 Points)",
+      "createdAt": "2026-10-22T22:58:20.056+00:00"
+    },
+    {
+      "id": "ledg_1792709898298",
+      "userId": "usr_1792709897734",
+      "providerTxId": "tx_1792709898298",
+      "amountCents": 80,
+      "entryType": "credit",
+      "status": "confirmed",
+      "description": "Direct Survey Reward (8,000 Points)",
+      "createdAt": "2026-10-22T22:58:18.298+00:00"
+    },
     {
       "id": "ledg_65b65a90-e734-4019-9a6e-a7412d6f2880",
       "userId": "usr_1792707132874",
@@ -168,26 +206,26 @@
       "createdAt": "2026-10-22T22:12:13.501+00:00"
     },
     {
-      "id": "ledg_1792709898298",
-      "userId": "usr_1792709897734",
-      "providerTxId": "tx_1792709898298",
+      "id": "ledg_1792713098831",
+      "userId": "usr_1792713098170",
+      "providerTxId": "tx_1792713098831",
       "amountCents": 80,
       "entryType": "credit",
       "status": "confirmed",
       "description": "Direct Survey Reward (8,000 Points)",
-      "createdAt": "2026-10-22T22:58:18.298Z",
-      "processedAt": "2026-10-22T22:58:18.298Z"
+      "createdAt": "2026-10-22T23:51:38.831Z",
+      "processedAt": "2026-10-22T23:51:38.831Z"
     },
     {
-      "id": "ledg_4f157f24-3c4d-4f71-af79-d1a2374fb29b",
-      "userId": "usr_1792709897734",
-      "providerTxId": "task_task_42b70ca9-33f5-44d0-bc98-839789a28efa_sub_3c3f7b26-d58f-4d88-933b-63ca64c715df",
+      "id": "ledg_7346733b-8fd5-4b5e-b4ac-b9d33ec1f76b",
+      "userId": "usr_1792713098170",
+      "providerTxId": "task_task_1a8a1ff4-def3-4a13-abef-30e64557a397_sub_f63eb69e-e451-4b75-8392-f5acf33feeb6",
       "amountCents": 10,
       "entryType": "credit",
       "status": "confirmed",
       "description": "Completed Task: \"Visit Reward River Telegram & Join Community\" (1,000 Points)",
-      "createdAt": "2026-10-22T22:58:20.056Z",
-      "processedAt": "2026-10-22T22:58:20.056Z"
+      "createdAt": "2026-10-22T23:51:40.688Z",
+      "processedAt": "2026-10-22T23:51:40.688Z"
     }
   ],
   "tasks": [
@@ -279,8 +317,37 @@
       "updatedAt": "2026-10-22T22:49:16.722+00:00"
     },
     {
+      "id": "task_42b70ca9-33f5-44d0-bc98-839789a28efa",
       "advertiserId": "usr_1792709897734",
       "advertiserEmail": "worker_test_1792709897734@rewardriver.com",
+      "title": "Visit Reward River Telegram & Join Community",
+      "description": "Join our official Telegram announcement channel and submit username proof.",
+      "instructions": [
+        "1. Open link",
+        "2. Click Join",
+        "3. Submit handle"
+      ],
+      "category": "social",
+      "targetUrl": "https://t.me/rewardriver",
+      "rewardPoints": 1000,
+      "rewardCents": 10,
+      "totalSlots": 20,
+      "completedSlots": 1,
+      "targetCountry": "ALL",
+      "targetDevice": "all",
+      "requiredProofType": "text",
+      "proofInstructions": "Enter your Telegram username",
+      "status": "active",
+      "platformFeePercent": 10,
+      "advertiserBudgetReservedCents": 200,
+      "advertiserFeeReservedCents": 20,
+      "adminNotes": null,
+      "createdAt": "2026-10-22T22:58:18.625489+00:00",
+      "updatedAt": "2026-10-22T22:58:20.329+00:00"
+    },
+    {
+      "advertiserId": "usr_1792713098170",
+      "advertiserEmail": "worker_test_1792713098170@rewardriver.com",
       "title": "Visit Reward River Telegram & Join Community",
       "description": "Join our official Telegram announcement channel and submit username proof.",
       "instructions": [
@@ -301,10 +368,10 @@
       "platformFeePercent": 10,
       "advertiserBudgetReservedCents": 200,
       "advertiserFeeReservedCents": 20,
-      "id": "task_42b70ca9-33f5-44d0-bc98-839789a28efa",
+      "id": "task_1a8a1ff4-def3-4a13-abef-30e64557a397",
       "completedSlots": 1,
-      "createdAt": "2026-10-22T22:58:19.194Z",
-      "updatedAt": "2026-10-22T22:58:20.329Z"
+      "createdAt": "2026-10-22T23:51:39.851Z",
+      "updatedAt": "2026-10-22T23:51:40.964Z"
     }
   ],
   "taskSubmissions": [
@@ -322,6 +389,21 @@
       "submittedAt": "2026-10-22T22:58:19.762Z",
       "reviewedAt": "2026-10-22T22:58:20.625Z",
       "reviewedBy": "admin_sys"
+    },
+    {
+      "id": "sub_f63eb69e-e451-4b75-8392-f5acf33feeb6",
+      "taskId": "task_1a8a1ff4-def3-4a13-abef-30e64557a397",
+      "taskTitle": "Visit Reward River Telegram & Join Community",
+      "workerId": "usr_1792713098170",
+      "workerEmail": "worker_test_1792713098170@rewardriver.com",
+      "advertiserId": "usr_1792713098170",
+      "rewardPoints": 1000,
+      "rewardCents": 10,
+      "proofText": "@reward_river_tester",
+      "status": "approved",
+      "submittedAt": "2026-10-22T23:51:40.417Z",
+      "reviewedAt": "2026-10-22T23:51:41.251Z",
+      "reviewedBy": "admin_sys"
     }
   ],
   "advertiserDeposits": [
@@ -336,6 +418,18 @@
       "txHashOrRef": "ref_9033de6731fa590e",
       "createdAt": "2026-10-22T22:58:18.610Z",
       "confirmedAt": "2026-10-22T22:58:18.610Z"
+    },
+    {
+      "id": "dep_0a6c70f6-742b-423e-a2cc-c781b32e1bd6",
+      "advertiserId": "usr_1792713098170",
+      "advertiserEmail": "worker_test_1792713098170@rewardriver.com",
+      "amountCents": 1000,
+      "amountPoints": 100000,
+      "method": "usdt_trc20",
+      "status": "completed",
+      "txHashOrRef": "ref_96b873befa91cf60",
+      "createdAt": "2026-10-22T23:51:39.285Z",
+      "confirmedAt": "2026-10-22T23:51:39.285Z"
     }
   ],
   "adSettings": {
@@ -356,7 +450,7 @@
       "format": "728x90",
       "enabled": true,
       "adCode": "<div class=\"rr-custom-sponsor\">Reward River Sponsor Ad 2026</div>",
-      "updatedAt": "2026-10-22T22:58:20.900Z"
+      "updatedAt": "2026-10-22T23:51:41.520Z"
     }
   ],
   "offerwallSettings": {
@@ -432,6 +526,20 @@
     }
   ],
   "platformTreasury": [
+    {
+      "id": "pt_84d4364b-bbea-4a0e-9ebf-a9b9a95e1bd1",
+      "providerId": "cpx",
+      "providerName": "Reward River Direct Gateway • Survey Stream Alpha",
+      "sourceType": "survey",
+      "grossAmountCents": 200,
+      "userShareCents": 80,
+      "platformShareCents": 120,
+      "userId": "usr_1792709897734",
+      "userEmail": "worker_test_1792709897734@rewardriver.com",
+      "providerTxId": "tx_1792709898017",
+      "description": "Verified Direct Survey Completion",
+      "createdAt": "2026-10-22T22:58:18.019+00:00"
+    },
     {
       "id": "pt_8c40cea9-49f0-4bc6-9f48-3c8d29e62f22",
       "providerId": "bitlabs_test_1792709878497",
@@ -509,12 +617,12 @@
       "grossAmountCents": 200,
       "userShareCents": 80,
       "platformShareCents": 120,
-      "userId": "usr_1792709897734",
-      "userEmail": "worker_test_1792709897734@rewardriver.com",
-      "providerTxId": "tx_1792709898017",
+      "userId": "usr_1792713098170",
+      "userEmail": "worker_test_1792713098170@rewardriver.com",
+      "providerTxId": "tx_1792713098543",
       "description": "Verified Direct Survey Completion",
-      "id": "pt_84d4364b-bbea-4a0e-9ebf-a9b9a95e1bd1",
-      "createdAt": "2026-10-22T22:58:18.019Z"
+      "id": "pt_18177891-f94b-4cbb-bee9-9bcb16be6151",
+      "createdAt": "2026-10-22T23:51:38.546Z"
     }
   ],
   "withdrawalRequests": [],

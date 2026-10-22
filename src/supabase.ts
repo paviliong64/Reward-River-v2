@@ -6,16 +6,25 @@
 import { createClient, SupabaseClient, User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { User, UserBalances } from './types';
 
-// Supabase environment variables from Vite
-const envUrl = (import.meta as any).env?.VITE_SUPABASE_URL || '';
-const envKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
+// Supabase environment variables from Vite with live configured project fallback
+const envUrl =
+  import.meta.env.VITE_SUPABASE_URL ||
+  (typeof process !== 'undefined' && process.env?.SUPABASE_URL) ||
+  'https://vwoskusxfzmnoawbrpnr.supabase.co';
 
-// Default placeholder for development / offline fallback
-const SUPABASE_URL = envUrl || 'https://rewardriver-prod.supabase.co';
-const SUPABASE_ANON_KEY = envKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder';
+const envKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  (typeof process !== 'undefined' && process.env?.SUPABASE_ANON_KEY) ||
+  'sb_publishable_HVjFoLz84HMQ3ONultKhSA_rrnOtIpZ';
+
+export const SUPABASE_URL = envUrl;
+export const SUPABASE_ANON_KEY = envKey;
 
 export const isSupabaseConfigured = Boolean(
-  envUrl && envKey && !envUrl.includes('placeholder') && !envKey.includes('placeholder')
+  SUPABASE_URL &&
+  SUPABASE_ANON_KEY &&
+  !SUPABASE_URL.includes('placeholder') &&
+  !SUPABASE_ANON_KEY.includes('placeholder')
 );
 
 // Initialize Supabase Client
@@ -107,10 +116,21 @@ export async function signInWithSupabaseGoogle(): Promise<void> {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin
+      redirectTo: `${window.location.origin}/`,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent'
+      }
     }
   });
-  if (error) throw error;
+  if (error) {
+    if (error.message?.toLowerCase().includes('provider is not enabled')) {
+      throw new Error(
+        'Google OAuth provider is not enabled in your Supabase dashboard yet. Please go to Supabase Dashboard -> Authentication -> Providers -> Google, switch it ON, and enter your Google Client ID & Secret.'
+      );
+    }
+    throw error;
+  }
 }
 
 /**

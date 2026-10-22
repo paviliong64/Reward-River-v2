@@ -96,6 +96,26 @@ If you are connecting a new Supabase database instance:
 
 ---
 
+## 5.1 Google OAuth Configuration (One-Click Sign-In)
+
+Reward River is natively configured to support Google OAuth via Supabase:
+1. **Google Cloud Console:**
+   - Go to [Google Cloud Console Credentials](https://console.cloud.google.com/apis/credentials).
+   - Create an **OAuth 2.0 Client ID** (Application type: *Web application*).
+   - Under **Authorized redirect URIs**, add:
+     ```
+     https://vwoskusxfzmnoawbrpnr.supabase.co/auth/v1/callback
+     ```
+   - Copy the generated **Client ID** and **Client Secret**.
+2. **Supabase Dashboard:**
+   - In your [Supabase Dashboard](https://supabase.com/dashboard), navigate to **Authentication** -> **Providers** -> **Google**.
+   - Toggle the switch to **Enabled**.
+   - Paste your **Client ID** and **Client Secret** and click **Save**.
+3. **Frontend Integration:**
+   - Users can now click **Continue with Google** to seamlessly log in and sync their balance across devices.
+
+---
+
 ## 6. Admin Portal Access & Security
 
 To access the executive command center:
