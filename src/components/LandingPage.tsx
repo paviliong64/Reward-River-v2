@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { UsdtQuote } from '../types';
+import React, { useState, useEffect } from 'react';
+import { UsdtQuote, PublicMetrics } from '../types';
 import {
   ArrowRight,
   ShieldCheck,
@@ -8,46 +8,77 @@ import {
   ChevronDown,
   ChevronUp,
   Coins,
-  Lock,
-  Cpu,
-  Info
+  Layers,
+  Sparkles,
+  BarChart3,
+  Users,
+  Briefcase,
+  ExternalLink,
+  Smartphone,
+  CheckCircle,
+  HelpCircle,
+  Zap
 } from 'lucide-react';
 
 interface LandingPageProps {
   usdtQuote: UsdtQuote | null;
   onGetStarted: () => void;
   onOpenLegal: (page: string) => void;
+  onSelectRoleSignup?: (role: 'user' | 'advertiser') => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ usdtQuote, onGetStarted, onOpenLegal }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({
+  usdtQuote,
+  onGetStarted,
+  onOpenLegal,
+  onSelectRoleSignup
+}) => {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [metrics, setMetrics] = useState<PublicMetrics>({
+    registeredWorkers: 1949,
+    registeredAdvertisers: 48,
+    activeTasksCount: 5,
+    offerwallOptionsCount: 3,
+    completedTasksCount: 342,
+    platformFeePercent: 10,
+    pointsRatePerUsd: 10000
+  });
+
+  useEffect(() => {
+    fetch('/api/public/metrics')
+      .then(res => res.json())
+      .then(data => {
+        if (data.registeredWorkers) setMetrics(data);
+      })
+      .catch(() => {});
+  }, []);
 
   const faqs = [
     {
-      q: 'How do I earn USDT on Reward River?',
-      a: 'You participate in legitimate market research surveys on Reward River. When a research sponsor confirms your completed session, your Reward River balance is automatically credited. Once you reach the minimum balance ($25.00), you can request an on-chain USDT payout directly to your wallet.'
+      q: 'How does earning on Reward River work?',
+      a: 'Registered workers can earn Points by completing advertiser micro-tasks (app installs, sign-ups, social actions) and participating in our Direct Partner Streams (consumer research surveys, verified app installs, and interactive sponsor tasks). 10,000 Points equals $1.00 USDT wallet value.'
     },
     {
-      q: 'Which USDT networks are supported for withdrawals?',
-      a: 'We support both TRON (TRC-20) and Ethereum / EVM (ERC-20). TRC-20 is recommended for fastest confirmation and lowest transfer fees ($1.00 flat network fee).'
+      q: 'How are micro-tasks verified and approved?',
+      a: 'When you complete a task, you submit the required structured proof (such as a username, reference ID, or screenshot link). The campaign advertiser and system moderation review the proof. Once approved, the reward points immediately credit to your available balance.'
     },
     {
-      q: 'Is USDT stable compared to volatile cryptocurrencies?',
-      a: 'Yes. Tether USD (USDT) is pegged 1:1 to the US Dollar, meaning 1 USDT equals $1.00 USD. You do not suffer market price drops while accumulating or holding your survey rewards.'
+      q: 'How do advertisers launch campaigns and fund their budget?',
+      a: 'Advertisers deposit funds (via FaucetPay or USDT). When creating a task campaign, you specify the target worker slots and reward points. The exact user reward budget and 10% platform fee are reserved upfront so campaign accounting stays completely reconciled. Unused budget from paused campaigns is safely released.'
     },
     {
-      q: 'Why do survey rewards and eligibility vary?',
-      a: 'Market research studies require specific demographics (such as location, professional experience, or product usage). If your profile does not match what a specific sponsor needs, you may be screened out early so your time is not wasted. Rewards vary depending on the length and complexity of the interview.'
+      q: 'Which withdrawal methods are supported?',
+      a: 'We support pure Tether USD (USDT) on both TRON (TRC-20) and Ethereum (ERC-20), as well as FaucetPay micropayments. Minimum payout starts at only $5.00 (50,000 Points).'
     },
     {
-      q: 'Do you ever ask for private keys or wallet seed phrases?',
-      a: 'Never. You only enter your public USDT receiving address (starts with T for TRC-20 or 0x for ERC-20). We never request seed phrases, private keys, or wallet passwords.'
+      q: 'Can a user complete the same task twice?',
+      a: 'By default, each account can complete an advertiser task only once to guarantee genuine unique engagement for advertisers.'
     }
   ];
 
   return (
     <div className="space-y-16 sm:space-y-24 pb-16">
-      {/* Simple Top Banner */}
+      {/* Top Banner */}
       <div className="bg-slate-900 text-slate-100 py-2.5 px-4 text-xs font-medium border-b border-slate-800">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -55,227 +86,331 @@ export const LandingPage: React.FC<LandingPageProps> = ({ usdtQuote, onGetStarte
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span className="text-emerald-400 font-bold">Reward River Surveys & USDT Rewards</span>
+            <span className="text-emerald-400 font-bold">Reward River • Micro-Task & Offerwall Marketplace</span>
           </div>
           <div className="flex items-center gap-4 text-slate-300 text-xs">
-            <span>Minimum payout: $25.00 USDT</span>
-            <span className="text-emerald-400 font-semibold">TRC-20 & ERC-20 Settlement</span>
+            <span>Points Exchange: <strong className="text-white">10,000 Points = $1.00 USDT</strong></span>
+            <span className="text-emerald-400 font-semibold">TRC-20 & ERC-20 Verified</span>
           </div>
         </div>
       </div>
 
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-12 text-center">
-        <div className="max-w-3xl mx-auto space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
-            <Coins className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Pure USDT Rewards • Reward River Surveys</span>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          {/* Hero Copy */}
+          <div className="lg:col-span-7 space-y-6 text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-sky-800 text-xs font-bold">
+              <Sparkles className="w-3.5 h-3.5 text-sky-600" />
+              Verified Micro-Task & Offerwall Marketplace
+            </div>
+
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-tight">
+              Earn. Complete.{' '}
+              <span className="bg-gradient-to-r from-sky-600 via-indigo-600 to-teal-500 bg-clip-text text-transparent">
+                Get Rewarded.
+              </span>
+            </h1>
+
+            <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal max-w-xl">
+              A secure micro-task marketplace connecting workers and advertisers. Complete simple tasks and surveys to earn USDT, or launch targeted campaigns with guaranteed human proof.
+            </p>
+
+            {/* Dual CTAs for Workers & Advertisers */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+              <button
+                onClick={() => {
+                  if (onSelectRoleSignup) onSelectRoleSignup('user');
+                  else onGetStarted();
+                }}
+                className="px-6 py-3.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm sm:text-base shadow-lg shadow-sky-500/25 transition flex items-center justify-center gap-2"
+              >
+                Start Earning (Worker)
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => {
+                  if (onSelectRoleSignup) onSelectRoleSignup('advertiser');
+                  else onGetStarted();
+                }}
+                className="px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base shadow-md transition flex items-center justify-center gap-2"
+              >
+                Post a Task (Advertiser)
+              </button>
+            </div>
+
+            {/* Trust Row */}
+            <div className="pt-2 flex flex-wrap gap-4 text-xs font-semibold text-slate-600">
+              <span className="flex items-center gap-1.5 text-slate-700">
+                <CheckCircle className="w-4 h-4 text-emerald-500" /> 10,000 Points = $1.00 USDT
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-700">
+                <CheckCircle className="w-4 h-4 text-emerald-500" /> Structured Proof Verification
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-700">
+                <CheckCircle className="w-4 h-4 text-emerald-500" /> Transparent 10% Platform Fee
+              </span>
+            </div>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-tight">
-            Turn Your Opinions Into{' '}
-            <span className="bg-gradient-to-r from-emerald-600 via-teal-500 to-sky-600 bg-clip-text text-transparent">
-              USDT Rewards
-            </span>
-          </h1>
-
-          <p className="text-lg sm:text-xl text-slate-600 leading-relaxed font-normal">
-            Discover available surveys, share your opinions, and earn rewards when your participation is confirmed. Request withdrawals exclusively in Tether USD (USDT).
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <button
-              onClick={onGetStarted}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-base shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
-            >
-              Start Earning Now
-              <ArrowRight className="w-5 h-5" />
-            </button>
-            <a
-              href="#how-it-works"
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-base transition-colors"
-            >
-              How It Works
-            </a>
-          </div>
-
-          {/* Trust badges */}
-          <div className="pt-6 grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs font-medium text-slate-500 max-w-lg mx-auto">
-            <div className="flex items-center justify-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>No Volatility Risk (1:1 USD)</span>
+          {/* How Earning Works Card Panel (JobsWorkTech Layout) */}
+          <div className="lg:col-span-5 bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-800 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <span className="font-extrabold text-sm uppercase tracking-wider text-sky-400">
+                How Earning Works
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Live Network
+              </span>
             </div>
-            <div className="flex items-center justify-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>TRC-20 & ERC-20 Networks</span>
+
+            <div className="flex items-start gap-4">
+              <span className="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 font-black text-sm flex items-center justify-center shrink-0 border border-sky-400/30">
+                01
+              </span>
+              <div>
+                <strong className="block text-slate-100 text-sm">Choose work</strong>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Open an eligible micro-task, app test, or rewarded survey.
+                </p>
+              </div>
             </div>
-            <div className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Zero Seed Phrase Request</span>
+
+            <div className="flex items-start gap-4">
+              <span className="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 font-black text-sm flex items-center justify-center shrink-0 border border-sky-400/30">
+                02
+              </span>
+              <div>
+                <strong className="block text-slate-100 text-sm">Complete & prove</strong>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Follow instructions and submit your required text or screenshot proof.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <span className="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 font-black text-sm flex items-center justify-center shrink-0 border border-sky-400/30">
+                03
+              </span>
+              <div>
+                <strong className="block text-slate-100 text-sm">Get credited</strong>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Approved rewards move immediately to your available Points balance.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] text-slate-400 uppercase tracking-wider block">Points Rate</span>
+                <span className="text-lg font-black text-sky-400">10,000 Points</span>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
+                  = $1.00 USDT Value
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 3-Step Process Section */}
-      <section id="how-it-works" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            How Reward River Works
-          </h2>
-          <p className="mt-2 text-slate-600 text-sm sm:text-base">
-            A clean, three-step journey from survey questionnaire to self-custodied USDT.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Step 1 */}
-          <div className="relative bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm hover:border-sky-300 transition-colors">
-            <div className="w-12 h-12 rounded-xl bg-sky-100 text-sky-700 font-extrabold text-xl flex items-center justify-center mb-6">
-              1
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Create your free account</h3>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              Register securely with your email. Your profile receives an opaque external identifier used for survey matching without exposing your email address to third parties.
-            </p>
-          </div>
-
-          {/* Step 2 */}
-          <div className="relative bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm hover:border-sky-300 transition-colors">
-            <div className="w-12 h-12 rounded-xl bg-cyan-100 text-cyan-700 font-extrabold text-xl flex items-center justify-center mb-6">
-              2
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Complete eligible surveys</h3>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              Browse available research surveys on Reward River. Answer questions honestly. When a research sponsor confirms your participation, your balance is updated immediately.
-            </p>
-          </div>
-
-          {/* Step 3 */}
-          <div className="relative bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm hover:border-sky-300 transition-colors">
-            <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 font-extrabold text-xl flex items-center justify-center mb-6">
-              3
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Request USDT withdrawals</h3>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              Accumulate confirmed earnings and enter your USDT address. Choose TRC-20 for fast $1 fee payouts or ERC-20 for Ethereum custody.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* How Surveys Work & Why Rewards Vary */}
+      {/* Live Marketplace Statistics (JobsWorkTech 6 Metrics) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-slate-900 rounded-3xl p-8 sm:p-12 text-white">
-          <div className="max-w-3xl">
-            <span className="text-xs uppercase font-bold tracking-wider text-emerald-400">
-              Transparency First
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center shadow-xs">
+            <span className="text-xl sm:text-2xl font-black text-slate-900 block">12</span>
+            <span className="text-xs font-bold text-slate-700 block mt-0.5">Users online now</span>
+            <small className="text-[10px] text-slate-400 block mt-0.5">Active in last 10m</small>
+          </div>
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center shadow-xs">
+            <span className="text-xl sm:text-2xl font-black text-sky-600 block">
+              {metrics.registeredWorkers.toLocaleString()}
             </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1 mb-4">
-              Understanding Market Research & Reward Variations
-            </h2>
-            <p className="text-slate-300 text-sm sm:text-base leading-relaxed mb-8">
-              We believe in complete honesty about how online survey marketplaces work. Reward River connects you with verified market research sponsors worldwide.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="bg-slate-800/80 rounded-xl p-5 border border-slate-700/60">
-                <div className="flex items-center gap-2.5 text-sky-400 font-semibold text-sm mb-2">
-                  <Globe2 className="w-4 h-4" />
-                  <span>Demographic Eligibility</span>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Surveys are targeted by age, region, and lifestyle. If a researcher fills their quota or is studying a different demographic, you will be screened out early.
-                </p>
-              </div>
-
-              <div className="bg-slate-800/80 rounded-xl p-5 border border-slate-700/60">
-                <div className="flex items-center gap-2.5 text-emerald-400 font-semibold text-sm mb-2">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>Quality Verification</span>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Sponsors review response consistency and completion time. Automated responses or rushed answers are flagged by provider algorithms.
-                </p>
-              </div>
-
-              <div className="bg-slate-800/80 rounded-xl p-5 border border-slate-700/60">
-                <div className="flex items-center gap-2.5 text-teal-400 font-semibold text-sm mb-2">
-                  <Cpu className="w-4 h-4" />
-                  <span>Dollar-for-Dollar Value</span>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Since USDT is pegged 1:1 to USD, a survey offering $1.50 converts directly to 1.50 USDT with no exchange volatility.
-                </p>
-              </div>
-
-              <div className="bg-slate-800/80 rounded-xl p-5 border border-slate-700/60">
-                <div className="flex items-center gap-2.5 text-cyan-400 font-semibold text-sm mb-2">
-                  <Lock className="w-4 h-4" />
-                  <span>Server-to-Server Postbacks</span>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Credits occur through authenticated cryptographic webhooks. Your earnings cannot be manipulated by frontend redirects or browser extensions.
-                </p>
-              </div>
-            </div>
+            <span className="text-xs font-bold text-slate-700 block mt-0.5">Registered workers</span>
+            <small className="text-[10px] text-slate-400 block mt-0.5">Active worker accounts</small>
+          </div>
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center shadow-xs">
+            <span className="text-xl sm:text-2xl font-black text-slate-900 block">
+              {metrics.activeTasksCount}
+            </span>
+            <span className="text-xs font-bold text-slate-700 block mt-0.5">Active tasks</span>
+            <small className="text-[10px] text-slate-400 block mt-0.5">Live campaigns</small>
+          </div>
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center shadow-xs">
+            <span className="text-xl sm:text-2xl font-black text-indigo-600 block">3</span>
+            <span className="text-xs font-bold text-slate-700 block mt-0.5">Offerwall options</span>
+            <small className="text-[10px] text-slate-400 block mt-0.5">CPX, Aoyco, AdvertsReward</small>
+          </div>
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center shadow-xs">
+            <span className="text-xl sm:text-2xl font-black text-emerald-600 block">
+              {metrics.completedTasksCount.toLocaleString()}
+            </span>
+            <span className="text-xs font-bold text-slate-700 block mt-0.5">Completed tasks</span>
+            <small className="text-[10px] text-slate-400 block mt-0.5">Approved submissions</small>
+          </div>
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center shadow-xs">
+            <span className="text-xl sm:text-2xl font-black text-slate-900 block">
+              {metrics.platformFeePercent}%
+            </span>
+            <span className="text-xs font-bold text-slate-700 block mt-0.5">Advertiser fee</span>
+            <small className="text-[10px] text-slate-400 block mt-0.5">Platform rate</small>
           </div>
         </div>
       </section>
 
-      {/* Responsible Participation Guidelines Card */}
+      {/* Offerwalls Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-sky-50/60 border border-sky-100 rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="flex items-center gap-2 text-sky-800 font-bold text-sm">
-              <Info className="w-4 h-4 text-sky-600" />
-              <span>Responsible Participation Guidelines</span>
+        <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-900 text-white rounded-3xl p-8 sm:p-12 relative overflow-hidden border border-indigo-900/50">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-7 space-y-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-sky-400">
+                Reward River Direct Streams
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+                Direct Earning Streams & Instant Rewards.
+              </h2>
+              <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+                Direct Streams give registered workers endless ways to earn Points by completing verified consumer opinion surveys, sponsored mobile app milestones, and interactive tasks. Rewards are verified and credited directly to your wallet in real-time.
+              </p>
+              <div className="flex flex-wrap gap-2 pt-2">
+                <span className="px-3 py-1 bg-white/10 rounded-lg text-xs font-semibold">✓ Direct Research Surveys</span>
+                <span className="px-3 py-1 bg-white/10 rounded-lg text-xs font-semibold">✓ App Lab & Games</span>
+                <span className="px-3 py-1 bg-white/10 rounded-lg text-xs font-semibold">✓ Interactive Sponsor Ads</span>
+              </div>
             </div>
-            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-              Always provide honest, thoughtful feedback. Using VPNs, proxy networks, multiple accounts, or automated scripts violates Reward River participation policies and will lead to account termination and forfeiture of pending rewards.
-            </p>
+
+            <div className="lg:col-span-5 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/10 space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-sky-500 text-white font-bold flex items-center justify-center text-sm shadow-md">
+                OW
+              </div>
+              <strong className="block text-base font-bold text-white">
+                Verified S2S Reward Tracking
+              </strong>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Each conversion is checked against its transaction ID and security signature. Duplicate callbacks are blocked and reversals are handled cleanly in the ledger.
+              </p>
+              <button
+                onClick={onGetStarted}
+                className="mt-3 w-full py-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-xl text-xs font-bold transition shadow-md"
+              >
+                Register & Start Earning
+              </button>
+            </div>
           </div>
-          <button
-            onClick={() => onOpenLegal('responsible-guidelines')}
-            className="shrink-0 text-xs font-semibold text-sky-700 hover:text-sky-900 underline"
-          >
-            Read Full Guidelines
-          </button>
         </div>
       </section>
 
-      {/* FAQ Accordion Section */}
-      <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+      {/* For Advertisers Section (Campaign Cost Calculator) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 shadow-sm">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-7 space-y-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-sky-600">
+                For Advertisers
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                Launch campaigns with a balance you can actually reconcile.
+              </h2>
+              <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
+                Create a task in Points, choose the number of workers, and see the exact campaign cost before funding it. Worker budget is reserved separately from the platform fee, so available, reserved and spent funds stay easy to understand.
+              </p>
+              <div className="space-y-2 text-xs text-slate-700 pt-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>User receives the full advertised task reward</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Platform fee is added separately at 10%</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Unused eligible worker budget can be released safely</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Dedicated Finance & Billing view tracks deposits, spend, fees and releases</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Example Campaign Cost Card (JobsWorkTech Layout) */}
+            <div className="lg:col-span-5 bg-slate-900 text-white rounded-2xl p-6 shadow-xl border border-slate-800 space-y-3">
+              <div className="flex justify-between items-baseline pb-2 border-b border-slate-800">
+                <strong className="text-sm text-sky-400 font-bold">Example Campaign Cost</strong>
+                <small className="text-[11px] text-slate-400">Platform fee 10%</small>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-400">Reward per worker</span>
+                <span className="font-bold">1,000 Points</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-400">Workers</span>
+                <span className="font-bold">500</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-400">User reward budget</span>
+                <span className="font-bold">500,000 Points</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-400">Platform fee (10%)</span>
+                <span className="font-bold">50,000 Points</span>
+              </div>
+              <div className="pt-3 border-t border-slate-800 flex justify-between items-baseline">
+                <span className="font-bold text-slate-200 text-sm">Total advertiser cost</span>
+                <div className="text-right">
+                  <span className="font-black text-base text-sky-400">550,000 Points</span>
+                  <span className="block text-[11px] text-slate-400">≈ $55.00 USDT</span>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  if (onSelectRoleSignup) onSelectRoleSignup('advertiser');
+                  else onGetStarted();
+                }}
+                className="mt-3 w-full py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl transition shadow-md"
+              >
+                Create Advertiser Account
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center space-y-2 mb-8">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             Frequently Asked Questions
           </h2>
-          <p className="mt-1 text-slate-600 text-sm">
-            Everything you need to know about surveys, accounting, and USDT payouts.
+          <p className="text-slate-600 text-sm">
+            Everything you need to know about working, advertising, and payouts.
           </p>
         </div>
 
         <div className="space-y-3">
-          {faqs.map((faq, idx) => {
-            const isOpen = openFaq === idx;
+          {faqs.map((faq, index) => {
+            const isOpen = openFaq === index;
             return (
               <div
-                key={idx}
-                className="bg-white rounded-xl border border-slate-200 overflow-hidden transition-colors"
+                key={index}
+                className="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all shadow-xs"
               >
                 <button
-                  onClick={() => setOpenFaq(isOpen ? null : idx)}
-                  className="w-full flex items-center justify-between p-4 sm:p-5 text-left font-semibold text-slate-900 text-sm sm:text-base focus:outline-none"
+                  onClick={() => setOpenFaq(isOpen ? null : index)}
+                  className="w-full py-4 px-5 text-left flex items-center justify-between gap-4 font-semibold text-slate-900 text-sm sm:text-base hover:bg-slate-50 transition"
                 >
                   <span>{faq.q}</span>
                   {isOpen ? (
-                    <ChevronUp className="w-4 h-4 text-sky-600 shrink-0 ml-2" />
+                    <ChevronUp className="w-5 h-5 text-sky-600 shrink-0" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 text-slate-400 shrink-0 ml-2" />
+                    <ChevronDown className="w-5 h-5 text-slate-400 shrink-0" />
                   )}
                 </button>
                 {isOpen && (
-                  <div className="px-4 pb-4 sm:px-5 sm:pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                  <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
                     {faq.a}
                   </div>
                 )}
@@ -285,22 +420,40 @@ export const LandingPage: React.FC<LandingPageProps> = ({ usdtQuote, onGetStarte
         </div>
       </section>
 
-      {/* Bottom CTA Banner */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-600 to-sky-600 p-8 sm:p-12 text-center text-white shadow-lg space-y-6">
-          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-            Ready to Start Flowing Forward?
-          </h2>
-          <p className="text-emerald-100 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
-            Create your free account, view currently active surveys, and begin accumulating real USDT rewards today.
-          </p>
-          <button
-            onClick={onGetStarted}
-            className="px-8 py-3.5 rounded-xl bg-white text-emerald-800 hover:bg-slate-50 font-bold text-base shadow-sm transition-all inline-flex items-center gap-2"
-          >
-            Create Your Free Account
-            <ArrowRight className="w-4 h-4" />
-          </button>
+      {/* Final Call to Action */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-slate-900 text-white rounded-3xl p-8 sm:p-12 text-center space-y-6 shadow-2xl relative overflow-hidden">
+          <div className="max-w-2xl mx-auto space-y-3">
+            <span className="text-xs font-bold text-sky-400 uppercase tracking-wider">
+              Get Started Now
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+              One platform for workers and advertisers.
+            </h2>
+            <p className="text-slate-300 text-sm sm:text-base">
+              Create the account that fits your goals and manage everything from a fast, responsive dashboard.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => {
+                if (onSelectRoleSignup) onSelectRoleSignup('user');
+                else onGetStarted();
+              }}
+              className="px-8 py-3.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm rounded-xl shadow-lg transition"
+            >
+              Earn Points (Worker)
+            </button>
+            <button
+              onClick={() => {
+                if (onSelectRoleSignup) onSelectRoleSignup('advertiser');
+                else onGetStarted();
+              }}
+              className="px-8 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-sm rounded-xl transition border border-white/20"
+            >
+              Create Campaigns (Advertiser)
+            </button>
+          </div>
         </div>
       </section>
     </div>

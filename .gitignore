@@ -1,8 +1,27 @@
+# Dependency & Build Artifacts
 node_modules/
-build/
 dist/
+build/
 coverage/
-.DS_Store
-*.log
-.env*
+
+# Environment Configurations (Security - Never commit live secrets)
+.env
+.env.local
+.env.*.local
 !.env.example
+
+# OS and Editor Files
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Vercel & Supabase CLI temps
+.vercel/
+.temp/
+supabase/.temp/
+
+# Scratch directory
+scratch/

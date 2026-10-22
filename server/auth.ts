@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'reward-river-production-secure-hma
 export interface AuthSession {
   userId: string;
   email: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'advertiser' | 'admin';
   exp: number;
 }
 
@@ -54,24 +54,28 @@ export function verifySessionToken(token: string): AuthSession | null {
     }
   }
 
-  // Check if Firebase ID Token (3 parts standard JWT)
+  // Check if Supabase or standard JWT (3 parts standard JWT)
   if (token.split('.').length === 3) {
     try {
       const parts = token.split('.');
       const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
       
-      // Validate Firebase token structure
-      if (payload.iss && payload.iss.includes('securetoken.google.com') && payload.sub) {
+      // Validate Supabase / standard JWT token structure
+      if (payload.sub) {
         // Expired check
         if (payload.exp && Date.now() >= payload.exp * 1000) {
           return null;
         }
 
         const isAdmin = payload.email === 'paviliong64@gmail.com';
+        const role = isAdmin
+          ? 'admin'
+          : (payload.user_metadata?.role === 'advertiser' || payload.role === 'advertiser' ? 'advertiser' : 'user');
+
         return {
           userId: payload.sub,
           email: payload.email || '',
-          role: isAdmin ? 'admin' : 'user',
+          role,
           exp: (payload.exp || Math.floor(Date.now() / 1000) + 3600) * 1000
         };
       }
@@ -99,7 +103,7 @@ export async function authMiddleware(req: AuthenticatedRequest, res: Response, n
         user = dbStore.getUserByEmail(session.email);
       }
 
-      // If user came via Firebase ID token and isn't in local store yet, automatically instantiate
+      // If user came via Supabase ID token and isn't in local store yet, automatically instantiate
       if (!user && session.userId && session.email) {
         user = {
           id: session.userId,
@@ -110,6 +114,8 @@ export async function authMiddleware(req: AuthenticatedRequest, res: Response, n
           emailVerified: true,
           role: session.role,
           externalOpaqueId: `rr_cpx_${session.userId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 24)}`,
+          countryCode: 'US',
+          provider: 'supabase',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };

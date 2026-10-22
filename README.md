@@ -1,164 +1,224 @@
-# 🌊 Reward River — Turn Your Opinions Into USDT Rewards
+# 🌊 Reward River — Next-Generation Micro-Tasks, Direct Offerwalls & USDT Rewards Platform
 
-[![Node.js](https://img.shields.io/badge/Node.js-v20%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org)
 [![React 19](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![Firebase](https://img.shields.io/badge/Firebase-Auth_%26_Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL_17-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel_Ready-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
+[![Tailwind CSS 4](https://img.shields.io/badge/Tailwind_CSS-4.0-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![USDT](https://img.shields.io/badge/Settlement-USDT_(TRC20_%2F_ERC20)-26A17B?style=for-the-badge&logo=tether&logoColor=white)](https://tether.to)
 
-> **Reward River** is an enterprise-grade, white-labeled market research exchange and cryptocurrency rewards platform. Members participate in qualified market research surveys and earn real-time Tether USD (**USDT**) stablecoin rewards settled on-chain on TRON (TRC-20) or Ethereum (ERC-20).
+> **Reward River** is an enterprise-grade micro-tasks exchange, direct white-labeled survey marketplace, and cryptocurrency rewards platform. Engineered with a pure **Supabase (PostgreSQL 17)** backend, **JobsWorkTech** task workflows, **Reward River Direct Gateway** provider branding, an invisible **60/40 profit margin engine**, and turnkey **Vercel** deployment compatibility.
 
 ---
 
-## 👥 Co-Founders, Lead Engineers & Official Development Partner
+## 🏛️ Engineered & Architected By
 
-This platform is co-founded, engineered, and maintained by:
+This platform is architected, developed, and maintained by **Injazify Studios by Rayan Mirza**:
 
+* 🚀 **Injazify Studios**: [www.injazify.com](https://injazify.com)
+  * *Official Development Studio, Platform Engineering & Digital Infrastructure*
 * 🛠️ **Rayan Mirza** ([@zeroxnetworks](https://github.com/zeroxnetworks))
-  * *Co-Founder, Lead Software Engineer, Systems Architect & Repository Owner*
+  * *Founder, Lead Systems Architect & Co-Founder*
 * 💡 **Tahir Sanaullah**
-  * *Co-Founder, Lead Software Engineer, Product Architect & Repository Owner*
-* 🌐 **Official Development, Contact & Support Partner**: [www.injazify.com](https://www.injazify.com)
-  * *Official Platform Development, Support & Business Operations*
+  * *Product Architect & Co-Founder*
 
 ---
 
-## 🏗 Platform System Architecture
+## 🏗️ High-Level System Architecture
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                                    REWARD RIVER PLATFORM                                 │
-└─────────────────────────────────────────────────────────────────────────────────────────┘
-        │                                   │                                    │
-        ▼                                   ▼                                    ▼
- 🌐 REACT 19 FRONTEND               ⚙️ NODE/EXPRESS PROXY               🔥 FIREBASE ENGINE
-  ├── White-Labeled UI               ├── CPX API Integration             ├── Auth (Google & Email)
-  ├── Live USDT Benchmark            ├── MD5 Signature Verification      ├── Firestore Document Store
-  ├── Interactive Ledger Views       ├── Double-Entry Ledger Store       └── Role-Based Access Rules
-  └── On-Chain Wallet Submissions   └── S2S Postback Listener (`/api`)
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                       REWARD RIVER PLATFORM CORE                                       │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                    │                                                                │
+                    ▼                                                                ▼
+   🌐 FRONTEND / CLIENT (Vite + React 19)                           ⚙️ SERVERLESS & API LAYER
+    ├── 100% White-Labeled Direct UI                                  ├── Express / Vercel Serverless (`api/index.ts`)
+    ├── Deep-Linked SPA Routing (`#admin`, `#tasks`, `#surveys`)      ├── Supabase Service Role Integration
+    ├── Universal Responsive Ad System                                ├── Double-Entry Accounting Engine
+    └── Workers & Advertisers Multi-Role Dashboard                    └── Cryptographic S2S Postbacks Listener
+                    │                                                                │
+                    └───────────────────────────────┬────────────────────────────────┘
+                                                    ▼
+                                    ⚡ SUPABASE CLOUD (PostgreSQL 17)
+                                     ├── 13 Domain Tables (UUID / Indexed)
+                                     ├── Double-Entry Ledger Store (`reward_ledger`)
+                                     ├── JobsWorkTech Tasks & Proof Submissions
+                                     ├── 60% Retained Platform Margin Treasury
+                                     └── Row-Level Security & Role Governance
 ```
 
 ---
 
-## ✨ Key Capabilities & Innovations
+## ✨ Core Platform Capabilities & Modules
 
-- **White-Labeled Survey Marketplace**: Seamless integration with the official CPX Research API (`https://live-api.cpx-research.com`) fully white-labeled under the **Reward River** brand with zero third-party vendor leaks.
-- **Cryptographic Server-to-Server (S2S) Postbacks**:
-  - **`status=1`**: Confirmed survey completion -> Creates an authenticated `credit` ledger entry.
-  - **`status=2` / `status=3`**: Cancellation / fraud reversal -> Creates a `reversal` debit entry referencing `{trans_id}` to reconcile balances safely.
-  - **MD5 HMAC Verification**: Rejects forged webhooks via `md5(trans_id + '-' + hash_key)`.
-- **Double-Entry Financial Ledger**:
-  - Immutably logs every credit, debit, pending withdrawal hold, and chargeback.
-  - Enforces double-spend locks and balance validation before processing withdrawals.
-- **Dual-Chain USDT Settlement Engine**:
-  - Supports **TRON (TRC-20)** ($1.00 network fee) and **Ethereum (ERC-20)** ($2.50 network fee).
-  - Validates TRC-20 (`T...`) and ERC-20 (`0x...`) address formats on submission.
-- **Live Tether Peg Feed**: Sourced from CoinGecko API (`/api/v3/simple/price`) to guarantee 1:1 USD-to-USDT conversion rate accuracy.
+### 1. JobsWorkTech-Style Micro-Tasks Marketplace
+- **Advertiser Campaign Creator:** Advertisers fund campaigns using USDT TRC-20/ERC-20 deposits. Escrow deductions reserve worker rewards plus a 10% platform fee.
+- **Worker Execution Flow:** Direct access to verified tasks (app downloads, website registrations, social follows, reviews).
+- **Proof Validation:** Supports text answers, screenshots, and transaction/reference IDs. Advertisers and Admins review and approve proofs with single-click crediting.
 
----
+### 2. Reward River Direct Gateway (Zero Third-Party Vendor Leaks)
+- All survey and offerwall vendors are masked behind white-labeled direct streams:
+  - **CPX Research:** *"Reward River Direct Gateway • Survey Stream Alpha"*
+  - **Aoyco Network:** *"Reward River Direct Gateway • App Lab & Games"*
+  - **AdvertsReward Network:** *"Reward River Direct Gateway • Action Tasks Stream"*
+  - **BitLabs / Custom Providers:** Easily integrated through the Admin Portal.
+- Dynamic macro URL generation (`{user_id}`, `{external_id}`, `{secret}`) ensures users interact strictly with Reward River branding.
 
-## ⚙️ Environment Variables Setup
+### 3. Invisible 60/40 Profit Margin Engine
+- **Financial Architecture:**
+  - Whenever an offerwall or survey confirms earnings, **Reward River securely retains 60% platform profit** in the Platform Treasury.
+  - **Workers receive their transparent 40% payout** credited directly to their reward ledger and wallet balance.
+  - Workers never see internal gross amounts or vendor margins—only their earned rewards ($0.80 for a $2.00 completion).
 
-Copy `.env.example` to `.env` and configure your production environment:
+### 4. Pure Supabase Backend (Zero Firebase)
+- **Firebase completely purged:** No Firebase SDK or files remain.
+- **13 Production PostgreSQL Tables:** Defined in `supabase_schema.sql` and `supabase/migrations/`:
+  - `users`, `reward_ledger`, `tasks`, `task_submissions`, `advertiser_deposits`, `providers`, `ad_slots`, `ad_settings`, `platform_treasury`, `withdrawal_requests`, `withdrawal_events`, `system_settings`, `admin_audit_logs`.
+- **Dual-Mode Persistence:** Runs out of the box with intelligent offline fallback for development and seamlessly syncs with live Supabase databases in production.
 
-```env
-# Server & Application Configuration
-NODE_ENV=production
-PORT=3000
-APP_URL=https://your-domain.onrender.com
-JWT_SECRET=your-secure-random-32-byte-hex-string
+### 5. Universal Dynamic Ad Slots Engine
+- Full admin control over responsive ad banners without redeploying code:
+  - **Sticky Bottom Desktop (728x90)**
+  - **Sticky Bottom Mobile (468x60)**
+  - **Sidebar Rail Banner (300x250)**
+  - **Tasks Top Banner (Responsive)**
+- Supports raw HTML, Google AdSense, Adsterra, PropellerAds, or custom sponsor banners.
 
-# CPX Research Publisher Credentials
-CPX_APP_ID=37479
-CPX_HASH_KEY=yTrC9mntJwV1PSRJ5WdMbwMSel6qMheY
-CPX_POSTBACK_SECRET=yTrC9mntJwV1PSRJ5WdMbwMSel6qMheY
-
-# USDT Payout & Network Configuration
-USDT_DEFAULT_NETWORK=TRC20
-USDT_MIN_WITHDRAWAL_USD=25.00
-USDT_MAX_WITHDRAWAL_USD=500.00
-USDT_TRC20_FEE_USD=1.00
-USDT_ERC20_FEE_USD=2.50
-USDT_PRICE_FEED_PROVIDER=coingecko
-
-# Firebase Web Client Configuration (Optional / Client-side)
-VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_PROJECT_ID=your_project_id
-```
-
----
-
-## 🚀 Render Deployment Walkthrough
-
-Deploying Reward River on [Render.com](https://render.com) takes less than 3 minutes:
-
-1. **Connect Repository**:
-   - Log into Render and click **New +** → **Web Service**.
-   - Select your GitHub repository: `zeroxnetworks/reward-river`.
-
-2. **Build & Runtime Settings**:
-   - **Runtime**: `Node`
-   - **Build Command**: `npm install --legacy-peer-deps && npm run build`
-   - **Start Command**: `npm start`
-
-3. **Configure Environment Variables**:
-   Under **Environment**, add the following keys:
-   - `NODE_ENV`: `production`
-   - `PORT`: `3000`
-   - `CPX_APP_ID`: `37479`
-   - `CPX_HASH_KEY`: `yTrC9mntJwV1PSRJ5WdMbwMSel6qMheY`
-   - `CPX_POSTBACK_SECRET`: `yTrC9mntJwV1PSRJ5WdMbwMSel6qMheY`
-   - `JWT_SECRET`: *(Enter a secure random string)*
-
-4. **Deploy**:
-   Click **Create Web Service**. Render will build and launch your application.
+### 6. Executive 9-Tab Command Center (Admin Portal)
+1. **Financial Overview:** Gross Inflows, 60% Retained Profit, 40% User Payouts, Net Margin.
+2. **Direct Providers:** Add/Edit/Delete partner networks, custom URLs, and commissions.
+3. **Universal Ad Slots:** Live banner code editor and placement toggles.
+4. **Commission Controls:** Set global user shares (40%) and platform margins (60%).
+5. **Withdrawal Queue:** Review USDT TRC20/ERC20 cashouts, approve, reject, or mark as paid with TXID.
+6. **User Directory:** Real-time balances, activity history, and manual credit/debit adjustments.
+7. **Task Campaigns:** Global marketplace task moderation (approve/reject/pause campaigns).
+8. **Task Submissions:** Cross-platform review of worker proofs.
+9. **S2S Postback Simulator:** Test live CPX, Aoyco, or AdvertsReward webhooks with simulated payloads.
 
 ---
 
-## 🔗 CPX Research Postback Webhook Setup
+## 🚀 Step-by-Step Vercel Deployment Guide
 
-In your [CPX Research Publisher Dashboard](https://publisher.cpx-research.com) under **Applications** → **Postback Settings**, paste the following URL format:
+Deploying Reward River to **Vercel** takes under 2 minutes:
 
-```text
-https://YOUR-APP-NAME.onrender.com/api/cpx/postback?status={status}&trans_id={trans_id}&user_id={user_id}&sub_id={subid}&sub_id_2={subid_2}&amount_local={amount_local}&amount_usd={amount_usd}&offer_id={offer_ID}&hash={secure_hash}&ip_click={ip_click}
-```
-
-> **Note**: The Reward River server listens on `/api/cpx/postback`, `/api/cpx-postback`, and `/api/postback`, responding with HTTP `200 OK` and body `1` as expected by CPX verification tools.
-
----
-
-## 💻 Local Development & Testing
-
+### Step 1: Push Repository to GitHub
 ```bash
-# 1. Clone repository
-git clone https://github.com/zeroxnetworks/reward-river.git
-cd reward-river
+git add .
+git commit -m "feat: Reward River production release by Injazify Studios"
+git branch -M main
+git remote add origin https://github.com/YOUR_GITHUB_USERNAME/Reward-River.git
+git push -u origin main
+```
 
-# 2. Install dependencies
+### Step 2: Import into Vercel
+1. Go to [Vercel Dashboard](https://vercel.com/new).
+2. Connect your GitHub account and select your **`Reward-River`** repository.
+3. Framework Preset: **Vite** (Vercel will detect `package.json`).
+4. Build Command: `vite build` (or leave default).
+5. Output Directory: `dist` (default).
+
+### Step 3: Configure Environment Variables in Vercel
+In the Vercel project deployment settings, add the following Environment Variables:
+
+| Variable Name | Description | Example Value |
+| :--- | :--- | :--- |
+| `SUPABASE_URL` | Your Supabase Project URL | `https://vwoskusxfzmnoawbrpnr.supabase.co` |
+| `SUPABASE_ANON_KEY` | Supabase Anon Public Key | `sb_publishable_...` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase Service Role Secret Key | `sb_secret_...` |
+| `VITE_SUPABASE_URL` | Client Supabase URL | `https://vwoskusxfzmnoawbrpnr.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | Client Supabase Anon Key | `sb_publishable_...` |
+| `JWT_SECRET` | 32-byte Hex Session Secret | `reward-river-secure-secret-2026-prod` |
+| `CPX_APP_ID` | CPX Publisher App ID | `37479` |
+| `CPX_HASH_KEY` | CPX Secure Hash Key | `yTrC9mntJwV1PSRJ5WdMbwMSel6qMheY` |
+| `CPX_POSTBACK_SECRET` | CPX S2S Postback Secret | `yTrC9mntJwV1PSRJ5WdMbwMSel6qMheY` |
+| `NODE_ENV` | Runtime Environment | `production` |
+
+### Step 4: Deploy & Verify
+- Click **Deploy**. Vercel will build the frontend bundle and register `api/index.ts` as a serverless API function.
+- The included [`vercel.json`](file:///d:/reward%20river/Reward-River/vercel.json) automatically routes all `/api/*` calls to the serverless function and all other routes to `/index.html` with zero 404 errors.
+
+---
+
+## 🔐 Admin Portal Access on Any Domain
+
+The Admin Portal is fully accessible on any domain (Vercel, custom domain, localhost):
+
+1. **Direct URL:** Navigate to `https://your-domain.vercel.app/#admin` or `https://your-domain.vercel.app/admin`.
+2. **Footer Shortcut:** Click **"Command Center (Admin)"** in the bottom navigation.
+3. **Master Admin Credentials:**
+   - **Email:** `admin@rewardriver.com`
+   - **Password:** `admin123`
+4. **One-Click Quick Login:** The Admin Portal Gateway includes a **"⚡ One-Click Master Admin Login"** button for immediate executive access on any deployment.
+
+---
+
+## 🛠️ Local Development & Testing
+
+### Prerequisites
+- Node.js v20 or higher
+- npm or yarn
+
+### Installation & Startup
+```bash
+# 1. Install dependencies
 npm install
 
-# 3. Create environment file
-cp .env.example .env
+# 2. Run automated test suite
+npm test
 
-# 4. Start full-stack development server
+# 3. Start local development server (Express API + Vite HMR)
 npm run dev
 
-# 5. Execute automated unit test suite (15 passing tests)
-npm test
+# 4. Open in browser
+http://localhost:3000
 ```
 
 ---
 
-## 🔐 Privacy, Security & Compliance
+## 📦 Project Directory Structure
 
-- **Opaque User Isolation**: Survey networks only see anonymous hashes (`rr_cpx_...`). Member email addresses and personal identities are never exposed.
-- **Cryptographic Signature Guards**: All incoming webhooks are validated against MD5 signature candidates before altering user ledger balances.
-- **Firestore Security Rules**: Role-based access control (RBAC) ensures administrative commands are restricted strictly to authorized super-admins.
+```text
+Reward-River/
+├── api/
+│   └── index.ts                 # Vercel Serverless Function entrypoint
+├── server/
+│   ├── auth.ts                  # PBKDF2 Password hashing & Supabase JWT verification
+│   ├── db.ts                    # In-memory DatabaseStore with auto Supabase sync
+│   ├── supabase.ts              # Server-side Supabase client & token validator
+│   ├── supabaseStore.ts         # Supabase PostgreSQL CRUD operations
+│   ├── cpxResearchService.ts    # Secure CPX S2S postback listener
+│   ├── offerwallService.ts      # Aoyco & AdvertsReward webhook handlers
+│   ├── usdtPriceService.ts      # CoinGecko live USDT rate feed
+│   └── usdtPayoutService.ts     # USDT settlement manager
+├── src/
+│   ├── App.tsx                  # Main app container & deep-link hash router
+│   ├── supabase.ts              # Frontend Supabase SDK client & auth methods
+│   ├── components/
+│   │   ├── AdminView.tsx        # 9-Tab Executive Command Center
+│   │   ├── TasksView.tsx        # JobsWorkTech micro-tasks marketplace
+│   │   ├── AdvertiserView.tsx   # Campaign creator & billing portal
+│   │   ├── OfferwallsView.tsx   # Direct Gateway multi-offerwall hub
+│   │   ├── AdBanners.tsx        # Universal dynamic ad units
+│   │   ├── UserDashboard.tsx    # Worker wallet, stats & earnings
+│   │   ├── WithdrawalView.tsx   # USDT TRC20/ERC20 cashout portal
+│   │   ├── Navbar.tsx           # Responsive navigation bar
+│   │   └── Footer.tsx           # Legal links & Injazify Studios credits
+│   └── utils/
+│       ├── ledger.ts            # Double-entry balance calculation
+│       └── cpx.ts               # White-label direct gateway URL builder
+├── supabase/
+│   ├── config.toml              # Supabase CLI configuration
+│   └── migrations/              # Production database schema migrations
+├── vercel.json                  # Vercel deployment & serverless routing config
+├── supabase_schema.sql          # Complete 13-table PostgreSQL schema
+├── test_supabase_integration.ts # End-to-end verification test suite
+└── package.json                 # Project configuration & scripts
+```
 
 ---
 
-## 📜 License, Contact & Support
+## ⚖️ License & Copyright
 
-Developed, owned, and maintained jointly by **Rayan Mirza** ([@zeroxnetworks](https://github.com/zeroxnetworks)) & **Tahir Sanaullah**.
-Official contact, support, and platform operations powered exclusively by [www.injazify.com](https://www.injazify.com). All rights reserved.
+Copyright © 2026 **Reward River**. All rights reserved.  
+Engineered with precision by **[Injazify Studios by Rayan Mirza](https://injazify.com)** ([injazify.com](https://injazify.com)).

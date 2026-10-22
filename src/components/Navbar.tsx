@@ -12,7 +12,13 @@ import {
   ShieldCheck,
   LogOut,
   Menu,
-  X
+  X,
+  Briefcase,
+  Layers,
+  PlusCircle,
+  CheckSquare,
+  Wallet,
+  Repeat
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -24,6 +30,7 @@ interface NavbarProps {
   onOpenAuth: (mode: 'signin' | 'signup') => void;
   onSignOut: () => void;
   onOpenLegal: (page: string) => void;
+  onSwitchRole?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -32,24 +39,41 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentTab,
   onSelectTab,
   onOpenAuth,
-  onSignOut
+  onSignOut,
+  onSwitchRole
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const availableCents = balances?.availableCents ?? 0;
   const usdtAmount = usdCentsToUsdt(availableCents).toFixed(2);
+  const pointsAmount = (availableCents * 100).toLocaleString(); // 10,000 Points = $1 (100 pts / cent)
 
-  const navItems = [
+  const isAdvertiser = user?.role === 'advertiser';
+  const isAdmin = user?.role === 'admin';
+
+  // Worker Nav Items
+  const workerNavItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'surveys', label: 'Surveys', icon: ClipboardList },
-    { id: 'earnings', label: 'Earnings', icon: Coins },
+    { id: 'tasks', label: 'Tasks', icon: Layers },
+    { id: 'surveys', label: 'Direct Streams', icon: ClipboardList },
     { id: 'withdraw', label: 'Withdraw', icon: ArrowUpRight },
-    { id: 'transactions', label: 'Transactions', icon: Receipt },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'transactions', label: 'History', icon: Receipt },
+    { id: 'settings', label: 'Settings', icon: Settings }
   ];
 
-  if (user?.role === 'admin') {
-    navItems.push({ id: 'admin', label: 'Admin', icon: ShieldCheck });
+  // Advertiser Nav Items
+  const advertiserNavItems = [
+    { id: 'advertiser', label: 'Campaigns', icon: Briefcase },
+    { id: 'advertiser-create', label: 'Create Task', icon: PlusCircle },
+    { id: 'advertiser-proofs', label: 'Review Proofs', icon: CheckSquare },
+    { id: 'advertiser-billing', label: 'Billing & Deposits', icon: Wallet },
+    { id: 'settings', label: 'Settings', icon: Settings }
+  ];
+
+  const navItems = isAdvertiser ? advertiserNavItems : workerNavItems;
+
+  if (isAdmin) {
+    navItems.push({ id: 'admin', label: 'Admin Portal', icon: ShieldCheck });
   }
 
   const handleNavClick = (tabId: string) => {
@@ -61,14 +85,28 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Brand Logo */}
-          <button
-            onClick={() => handleNavClick(user ? 'dashboard' : 'landing')}
-            className="text-left focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-lg p-1"
-            aria-label="Reward River Home"
-          >
-            <Logo size="md" showTagline={!user} />
-          </button>
+          {/* Brand Logo & Mode Badge */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => handleNavClick(user ? (isAdvertiser ? 'advertiser' : 'dashboard') : 'landing')}
+              className="text-left focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-lg p-1"
+              aria-label="Reward River Home"
+            >
+              <Logo size="md" showTagline={!user} />
+            </button>
+
+            {user && !isAdmin && (
+              <span
+                className={`hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
+                  isAdvertiser
+                    ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                    : 'bg-sky-100 text-sky-800 border border-sky-200'
+                }`}
+              >
+                {isAdvertiser ? 'Advertiser Mode' : 'Worker Mode'}
+              </span>
+            )}
+          </div>
 
           {/* Desktop Navigation */}
           {user ? (
@@ -80,9 +118,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button
                     key={item.id}
                     onClick={() => handleNavClick(item.id)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-colors ${
                       isActive
-                        ? 'bg-sky-50 text-sky-700 font-semibold'
+                        ? 'bg-sky-50 text-sky-700 font-bold'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
@@ -104,7 +142,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={() => handleNavClick('landing')}
                 className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
               >
-                Rewards
+                Marketplace Tasks
+              </button>
+              <button
+                onClick={() => handleNavClick('landing')}
+                className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                Advertisers
               </button>
               <button
                 onClick={() => handleNavClick('landing')}
@@ -116,80 +160,95 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
 
           {/* Right Header Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {user ? (
-              <div className="flex items-center gap-3">
-                {/* Balance & USDT Quick-Withdraw Button */}
-                <button
-                  onClick={() => handleNavClick('withdraw')}
-                  className="group flex items-center gap-2.5 px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-full bg-gradient-to-r from-emerald-50 via-teal-50/70 to-white hover:from-emerald-100/70 hover:to-teal-50 border border-emerald-200 hover:border-emerald-400 shadow-xs hover:shadow-md hover:shadow-emerald-500/15 transition-all duration-200 active:scale-95 text-left"
-                  title="Your Available USDT Balance — Click to Withdraw"
-                  aria-label={`Available balance ${usdtAmount} USDT. Click to withdraw.`}
-                >
-                  <div className="relative flex items-center justify-center shrink-0">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-emerald-600 via-teal-600 to-emerald-500 text-white flex items-center justify-center font-black text-xs shadow-xs ring-2 ring-emerald-100 group-hover:ring-emerald-300 transition-all">
+              <div className="flex items-center gap-2 sm:gap-3">
+                {/* Switch Role Button */}
+                {!isAdmin && onSwitchRole && (
+                  <button
+                    onClick={onSwitchRole}
+                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+                    title={`Switch to ${isAdvertiser ? 'Worker' : 'Advertiser'} Mode`}
+                  >
+                    <Repeat className="w-3.5 h-3.5 text-slate-500" />
+                    <span>{isAdvertiser ? 'Worker Mode' : 'Advertiser Hub'}</span>
+                  </button>
+                )}
+
+                {/* Worker Balance (Points + USDT) */}
+                {!isAdvertiser && (
+                  <button
+                    onClick={() => handleNavClick('withdraw')}
+                    className="group flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/70 to-white hover:from-emerald-100/70 hover:to-teal-50 border border-emerald-200 hover:border-emerald-400 shadow-xs transition-all text-left"
+                    title="Your Available Wallet Balance — Click to Withdraw USDT"
+                  >
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-black text-xs shadow-xs">
                       ₮
                     </div>
-                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 border border-white animate-pulse" />
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <div className="flex items-baseline gap-1 leading-tight">
-                      <span className="text-xs font-extrabold text-slate-900 tracking-tight font-mono">
-                        {usdtAmount}
-                      </span>
-                      <span className="text-[10px] font-black text-emerald-600 font-sans tracking-wide">
-                        USDT
-                      </span>
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-baseline gap-1 leading-tight">
+                        <span className="text-xs font-extrabold text-slate-900 font-mono">
+                          {pointsAmount} <span className="text-[10px] text-slate-500 font-sans">Pts</span>
+                        </span>
+                      </div>
+                      <div className="text-[10px] font-semibold text-emerald-600 flex items-center gap-1 leading-none mt-0.5">
+                        <span>${usdtAmount} USDT</span>
+                      </div>
                     </div>
-                    <div className="text-[10px] font-medium text-slate-500 group-hover:text-emerald-700 transition-colors flex items-center gap-1 leading-none mt-0.5">
-                      <span className="text-slate-400 font-mono">${(availableCents / 100).toFixed(2)}</span>
-                      <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-100/70 px-1 py-0.2 rounded">Withdraw</span>
+                  </button>
+                )}
+
+                {/* Advertiser Balance */}
+                {isAdvertiser && (
+                  <button
+                    onClick={() => handleNavClick('advertiser-billing')}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-left transition"
+                    title="Advertiser Deposit Balance"
+                  >
+                    <Wallet className="w-4 h-4 text-amber-600" />
+                    <div>
+                      <div className="text-xs font-bold text-amber-950 font-mono">
+                        ${((user.advertiserBalanceCents || 0) / 100).toFixed(2)} USDT
+                      </div>
+                      <div className="text-[10px] font-medium text-amber-700">Deposit Wallet</div>
                     </div>
-                  </div>
-                  <div className="hidden xs:flex w-5 h-5 rounded-full bg-white/90 group-hover:bg-emerald-600 border border-emerald-100 group-hover:border-emerald-600 items-center justify-center text-emerald-600 group-hover:text-white transition-all shrink-0 ml-0.5 shadow-2xs">
-                    <ArrowUpRight className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  </button>
+                )}
+
+                {/* User Settings Icon */}
+                <button
+                  onClick={() => handleNavClick('settings')}
+                  className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 transition text-slate-700"
+                  title={user.email}
+                  aria-label="User Settings"
+                >
+                  <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-800 flex items-center justify-center font-bold text-xs uppercase">
+                    {user.displayName?.[0] || user.email[0]}
                   </div>
                 </button>
 
-                {/* User Profile Pill */}
-                <div className="flex items-center gap-2 pl-1">
-                  <button
-                    onClick={() => handleNavClick('settings')}
-                    className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 transition-colors text-slate-700"
-                    title={user.email}
-                    aria-label="User Settings"
-                  >
-                    <div className="w-7 h-7 rounded-full bg-sky-100 text-sky-800 flex items-center justify-center font-bold text-xs uppercase">
-                      {user.displayName?.[0] || user.email[0]}
-                    </div>
-                    <span className="hidden lg:inline text-xs font-medium text-slate-800 max-w-[120px] truncate">
-                      {user.displayName}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={onSignOut}
-                    className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                    title="Sign Out"
-                    aria-label="Sign Out"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </button>
-                </div>
+                {/* Sign Out Icon */}
+                <button
+                  onClick={onSignOut}
+                  className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
             ) : (
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => onOpenAuth('signin')}
-                  className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition"
                 >
                   Sign In
                 </button>
                 <button
                   onClick={() => onOpenAuth('signup')}
-                  className="px-4 py-2 text-sm font-semibold text-white bg-sky-600 hover:bg-sky-500 rounded-lg shadow-sm transition-all"
+                  className="px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-sky-600 hover:bg-sky-500 rounded-xl shadow-md transition"
                 >
-                  Create Account
+                  Get Started
                 </button>
               </div>
             )}
@@ -198,7 +257,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {user && (
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+                className="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition"
                 aria-label="Toggle mobile menu"
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -211,19 +270,19 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && user && (
         <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-2 animate-fadeIn">
-          {/* Mobile Balance Display */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 mb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
-                ₮
-              </div>
-              <span className="text-xs font-medium text-slate-600">Available Balance</span>
-            </div>
-            <div className="text-right">
-              <span className="text-sm font-bold text-slate-900">${(availableCents / 100).toFixed(2)}</span>
-              <span className="text-xs text-emerald-700 ml-1.5 font-mono">({usdtAmount} USDT)</span>
-            </div>
-          </div>
+          {/* Mobile Role Switcher */}
+          {!isAdmin && onSwitchRole && (
+            <button
+              onClick={() => {
+                onSwitchRole();
+                setMobileMenuOpen(false);
+              }}
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-100 text-slate-700 font-semibold text-xs mb-2"
+            >
+              <Repeat className="w-4 h-4" />
+              Switch to {isAdvertiser ? 'Worker Mode' : 'Advertiser Hub'}
+            </button>
+          )}
 
           {navItems.map(item => {
             const Icon = item.icon;
@@ -232,9 +291,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition ${
                   isActive
-                    ? 'bg-sky-50 text-sky-700 font-semibold'
+                    ? 'bg-sky-50 text-sky-700 font-bold'
                     : 'text-slate-700 hover:bg-slate-50'
                 }`}
               >
@@ -250,7 +309,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setMobileMenuOpen(false);
                 onSignOut();
               }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50"
             >
               <LogOut className="w-4 h-4" />
               Sign Out

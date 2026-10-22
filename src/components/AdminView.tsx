@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { User, Withdrawal, SystemSettings, AdminUserDetail } from '../types';
+import {
+  User,
+  Withdrawal,
+  SystemSettings,
+  AdminUserDetail,
+  TaskCampaign,
+  TaskSubmission,
+  AdSettings,
+  ProviderConfig,
+  AdSlotConfig,
+  PlatformTreasuryEntry,
+  FinancialSummary
+} from '../types';
 import {
   ShieldCheck,
   RefreshCw,
@@ -12,10 +24,27 @@ import {
   Eye,
   X,
   Globe,
-  Calendar,
   DollarSign,
-  Award,
-  Filter
+  Layers,
+  CheckSquare,
+  Sparkles,
+  Zap,
+  Settings,
+  FileText,
+  AlertCircle,
+  Play,
+  Pause,
+  Repeat,
+  Plus,
+  Trash2,
+  Edit,
+  Code,
+  Sliders,
+  TrendingUp,
+  CreditCard,
+  Copy,
+  Check,
+  Lock
 } from 'lucide-react';
 
 interface AdminViewProps {
@@ -24,58 +53,122 @@ interface AdminViewProps {
   cpxStatus?: any;
   onRefreshAll?: () => void;
   onDataChanged?: () => void;
+  onAdminLoginSuccess?: (data: { user: User; balances: any; token: string }) => void;
 }
 
-export const AdminView: React.FC<AdminViewProps> = ({ user, adminUser, onRefreshAll, onDataChanged }) => {
+export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLoginSuccess }: AdminViewProps) {
   const triggerRefresh = onRefreshAll || onDataChanged || (() => {});
-  const [activeSubTab, setActiveSubTab] = useState<'withdrawals' | 'users' | 'cpx_tester' | 'settings' | 'audit_logs'>('withdrawals');
-  const [overview, setOverview] = useState<any>(null);
+  const [activeSubTab, setActiveSubTab] = useState<
+    'financials' | 'providers' | 'ads' | 'commissions' | 'withdrawals' | 'users' | 'campaigns' | 'submissions' | 'simulator'
+  >('financials');
+
+  const [financials, setFinancials] = useState<FinancialSummary | null>(null);
+  const [treasuryLogs, setTreasuryLogs] = useState<PlatformTreasuryEntry[]>([]);
+  const [providers, setProviders] = useState<ProviderConfig[]>([]);
+  const [adSlots, setAdSlots] = useState<AdSlotConfig[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [usersList, setUsersList] = useState<AdminUserDetail[]>([]);
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [campaignsList, setCampaignsList] = useState<TaskCampaign[]>([]);
+  const [submissionsList, setSubmissionsList] = useState<TaskSubmission[]>([]);
   const [settings, setSettings] = useState<SystemSettings | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [actionMessage, setActionMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // User search and user detail modal
+  // User search & modals
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [selectedUserDetail, setSelectedUserDetail] = useState<AdminUserDetail | null>(null);
+  const [balanceModalUser, setBalanceModalUser] = useState<AdminUserDetail | null>(null);
+  const [balanceAdjAmount, setBalanceAdjAmount] = useState<number>(500); // 500 cents = $5.00
+  const [balanceAdjType, setBalanceAdjType] = useState<'credit' | 'debit'>('credit');
+  const [balanceAdjReason, setBalanceAdjReason] = useState<string>('Bonus reward credit');
 
-  // Modal for marking as paid with TxHash
+  // Withdrawal Mark as Paid Modal
   const [payoutModal, setPayoutModal] = useState<{ id: string; txHash: string; notes: string } | null>(null);
+  const [rejectModal, setRejectModal] = useState<{ id: string; reason: string } | null>(null);
 
-  // CPX Postback simulator state
-  const [testAmountCents, setTestAmountCents] = useState(150);
-  const [testOfferId, setTestOfferId] = useState('offer_101');
-  const [testStatus, setTestStatus] = useState<number>(1);
-  const [testResult, setTestResult] = useState<any>(null);
+  // Provider Modal (Add / Edit)
+  const [providerModal, setProviderModal] = useState<Partial<ProviderConfig> | null>(null);
+
+  // Ad Slot Modal (Edit Code)
+  const [editingAdSlot, setEditingAdSlot] = useState<AdSlotConfig | null>(null);
+
+  // Postback Simulator State
+  const [simProvider, setSimProvider] = useState<string>('cpx');
+  const [simPoints, setSimPoints] = useState<number>(2000);
+  const [simTargetUserId, setSimTargetUserId] = useState<string>('');
+  const [simStatus, setSimStatus] = useState<number>(1);
+  const [simResult, setSimResult] = useState<any>(null);
+
+  // Image Preview Modal
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  // Admin Portal Gate State
+  const [adminEmail, setAdminEmail] = useState('admin@rewardriver.com');
+  const [adminPassword, setAdminPassword] = useState('admin123');
+  const [adminLoginLoading, setAdminLoginLoading] = useState(false);
+  const [adminLoginError, setAdminLoginError] = useState<string | null>(null);
+
+  const handleAdminLogin = async (e?: React.FormEvent, customEmail?: string, customPass?: string) => {
+    if (e) e.preventDefault();
+    setAdminLoginLoading(true);
+    setAdminLoginError(null);
+    try {
+      const email = customEmail || adminEmail;
+      const password = customPass || adminPassword;
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Invalid administrator credentials.');
+      }
+      if (data.user?.role !== 'admin') {
+        throw new Error('This account does not have Administrator privileges.');
+      }
+      localStorage.setItem('rr_auth_token', data.token);
+      if (onAdminLoginSuccess) {
+        onAdminLoginSuccess(data);
+      } else {
+        window.location.reload();
+      }
+    } catch (err: any) {
+      setAdminLoginError(err.message || 'Login failed.');
+    } finally {
+      setAdminLoginLoading(false);
+    }
+  };
 
   const fetchAdminData = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('rr_auth_token');
-      const [ovRes, wRes, sRes, lRes, uRes] = await Promise.all([
-        fetch('/api/admin/overview', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/admin/withdrawals', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/admin/settings', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/admin/audit-logs', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/admin/users', { headers: { Authorization: `Bearer ${token}` } })
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const [finRes, trRes, provRes, adsRes, wRes, sRes, uRes, cRes, subRes] = await Promise.all([
+        fetch('/api/admin/financials', { headers }),
+        fetch('/api/admin/treasury', { headers }),
+        fetch('/api/admin/providers', { headers }),
+        fetch('/api/admin/ad-slots', { headers }),
+        fetch('/api/admin/withdrawals', { headers }),
+        fetch('/api/admin/settings', { headers }),
+        fetch('/api/admin/users', { headers }),
+        fetch('/api/admin/campaigns', { headers }),
+        fetch('/api/admin/submissions', { headers })
       ]);
 
-      if (ovRes.ok) setOverview(await ovRes.json());
-      if (wRes.ok) {
-        const data = await wRes.json();
-        setWithdrawals(data.withdrawals || []);
-      }
+      if (finRes.ok) setFinancials((await finRes.json()).summary || null);
+      if (trRes.ok) setTreasuryLogs((await trRes.json()).treasury || []);
+      if (provRes.ok) setProviders((await provRes.json()).providers || []);
+      if (adsRes.ok) setAdSlots((await adsRes.json()).adSlots || []);
+      if (wRes.ok) setWithdrawals((await wRes.json()).withdrawals || []);
       if (sRes.ok) setSettings(await sRes.json());
-      if (lRes.ok) {
-        const data = await lRes.json();
-        setAuditLogs(data.logs || []);
-      }
-      if (uRes.ok) {
-        const data = await uRes.json();
-        setUsersList(data.users || []);
-      }
+      if (uRes.ok) setUsersList((await uRes.json()).users || []);
+      if (cRes.ok) setCampaignsList((await cRes.json()).campaigns || []);
+      if (subRes.ok) setSubmissionsList((await subRes.json()).submissions || []);
     } catch (err) {
       console.error('Failed to load admin data:', err);
     } finally {
@@ -87,80 +180,291 @@ export const AdminView: React.FC<AdminViewProps> = ({ user, adminUser, onRefresh
     fetchAdminData();
   }, []);
 
-  const handleReviewAction = async (id: string, action: string, notes?: string, txHash?: string) => {
-    setActionMessage(null);
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  // --- Provider Handlers ---
+  const handleSaveProvider = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!providerModal || !providerModal.id || !providerModal.name) return;
+
     try {
-      const res = await fetch(`/api/admin/withdrawals/${id}/review`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('rr_auth_token')}`
-        },
-        body: JSON.stringify({ action, notes, txHash })
+      const token = localStorage.getItem('rr_auth_token');
+      const isEdit = providers.some(p => p.id === providerModal.id);
+      const url = isEdit ? `/api/admin/providers/${providerModal.id}` : '/api/admin/providers';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(providerModal)
       });
       const data = await res.json();
-      if (!res.ok) {
-        setActionMessage({ text: data.error || 'Review action failed.', type: 'error' });
+      if (res.ok) {
+        setActionMessage({ text: `Provider "${providerModal.name}" saved successfully.`, type: 'success' });
+        setProviderModal(null);
+        fetchAdminData();
+        triggerRefresh();
       } else {
-        setActionMessage({ text: `Withdrawal updated to ${action}.`, type: 'success' });
-        setPayoutModal(null);
+        setActionMessage({ text: data.error || 'Failed to save provider.', type: 'error' });
+      }
+    } catch {
+      setActionMessage({ text: 'Network request failed.', type: 'error' });
+    }
+  };
+
+  const handleDeleteProvider = async (id: string) => {
+    if (!confirm(`Are you sure you want to delete provider "${id}"?`)) return;
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch(`/api/admin/providers/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setActionMessage({ text: `Provider ${id} deleted.`, type: 'success' });
+        fetchAdminData();
+        triggerRefresh();
+      } else {
+        setActionMessage({ text: 'Failed to delete provider.', type: 'error' });
+      }
+    } catch {
+      setActionMessage({ text: 'Delete request failed.', type: 'error' });
+    }
+  };
+
+  const handleToggleProvider = async (provider: ProviderConfig) => {
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch(`/api/admin/providers/${provider.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ enabled: !provider.enabled })
+      });
+      if (res.ok) {
         fetchAdminData();
         triggerRefresh();
       }
-    } catch {
-      setActionMessage({ text: 'Network communication failed.', type: 'error' });
-    }
+    } catch {}
   };
 
-  const handleSimulateCpxPostback = async () => {
-    setTestResult(null);
+  // --- Ad Slot Handlers ---
+  const handleSaveAdSlot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAdSlot) return;
+
     try {
-      const res = await fetch('/api/admin/test-cpx-postback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('rr_auth_token')}`
-        },
-        body: JSON.stringify({
-          amountCents: testAmountCents,
-          offerId: testOfferId,
-          status: testStatus
-        })
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch(`/api/admin/ad-slots/${editingAdSlot.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(editingAdSlot)
       });
-      const data = await res.json();
-      setTestResult(data);
-      fetchAdminData();
-      triggerRefresh();
+      if (res.ok) {
+        setActionMessage({ text: `Ad slot "${editingAdSlot.name}" updated successfully.`, type: 'success' });
+        setEditingAdSlot(null);
+        fetchAdminData();
+      } else {
+        setActionMessage({ text: 'Failed to update ad slot.', type: 'error' });
+      }
     } catch {
-      setTestResult({ error: 'Failed to simulate postback' });
+      setActionMessage({ text: 'Network request failed.', type: 'error' });
     }
   };
 
+  const handleToggleAdSlot = async (slot: AdSlotConfig) => {
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch(`/api/admin/ad-slots/${slot.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ enabled: !slot.enabled })
+      });
+      if (res.ok) fetchAdminData();
+    } catch {}
+  };
+
+  // --- Commission & System Settings Handlers ---
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!settings) return;
-    setActionMessage(null);
     try {
+      const token = localStorage.getItem('rr_auth_token');
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('rr_auth_token')}`
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(settings)
       });
       if (res.ok) {
-        setActionMessage({ text: 'System settings updated successfully.', type: 'success' });
+        setActionMessage({ text: 'Commission splits & system settings updated successfully.', type: 'success' });
         fetchAdminData();
       } else {
-        setActionMessage({ text: 'Failed to save settings.', type: 'error' });
+        setActionMessage({ text: 'Failed to update settings.', type: 'error' });
       }
     } catch {
-      setActionMessage({ text: 'Failed to update platform settings.', type: 'error' });
+      setActionMessage({ text: 'Network request failed.', type: 'error' });
     }
   };
 
-  // Filtered users for User Directory
+  // --- Withdrawal Actions ---
+  const handleApprovePaid = async () => {
+    if (!payoutModal) return;
+    if (!payoutModal.txHash.trim()) {
+      alert('Please enter the on-chain USDT transaction hash (TXID).');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch(`/api/admin/withdrawals/${payoutModal.id}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'mark_paid', txHash: payoutModal.txHash.trim(), notes: payoutModal.notes })
+      });
+      if (res.ok) {
+        setActionMessage({ text: 'Withdrawal marked as PAID with TX Hash confirmed.', type: 'success' });
+        setPayoutModal(null);
+        fetchAdminData();
+        triggerRefresh();
+      } else {
+        setActionMessage({ text: 'Failed to mark withdrawal as paid.', type: 'error' });
+      }
+    } catch {
+      setActionMessage({ text: 'Action request failed.', type: 'error' });
+    }
+  };
+
+  const handleRejectWithdrawal = async () => {
+    if (!rejectModal) return;
+    if (!rejectModal.reason.trim()) {
+      alert('Please provide a reason for rejecting this withdrawal.');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch(`/api/admin/withdrawals/${rejectModal.id}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'reject', notes: rejectModal.reason.trim() })
+      });
+      if (res.ok) {
+        setActionMessage({ text: 'Withdrawal rejected and funds refunded back to worker wallet.', type: 'success' });
+        setRejectModal(null);
+        fetchAdminData();
+        triggerRefresh();
+      } else {
+        setActionMessage({ text: 'Failed to reject withdrawal.', type: 'error' });
+      }
+    } catch {
+      setActionMessage({ text: 'Action request failed.', type: 'error' });
+    }
+  };
+
+  // --- Balance Adjustment Handler ---
+  const handleAdjustUserBalance = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!balanceModalUser) return;
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch(`/api/admin/users/${balanceModalUser.id}/adjust-balance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          amountCents: balanceAdjAmount,
+          type: balanceAdjType,
+          description: balanceAdjReason
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setActionMessage({
+          text: `Balance adjusted for ${balanceModalUser.email}: ${balanceAdjType === 'credit' ? '+' : '-'}$${(balanceAdjAmount / 100).toFixed(2)} (${balanceAdjAmount * 100} Points)`,
+          type: 'success'
+        });
+        setBalanceModalUser(null);
+        fetchAdminData();
+        triggerRefresh();
+      } else {
+        setActionMessage({ text: data.error || 'Failed to adjust balance.', type: 'error' });
+      }
+    } catch {
+      setActionMessage({ text: 'Adjustment request failed.', type: 'error' });
+    }
+  };
+
+  // --- Postback Simulator Handler ---
+  const handleSimulatePostback = async () => {
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch('/api/admin/test-offerwall-postback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          provider: simProvider,
+          targetUserId: simTargetUserId || adminUser?.id,
+          rewardPoints: simPoints,
+          status: simStatus
+        })
+      });
+      const data = await res.json();
+      setSimResult(data);
+      fetchAdminData();
+      triggerRefresh();
+    } catch {
+      setSimResult({ error: 'Simulation request failed' });
+    }
+  };
+
+  // --- Campaign & Submission Review Handlers ---
+  const handleCampaignAction = async (id: string, action: string) => {
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch(`/api/admin/campaigns/${id}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action })
+      });
+      if (res.ok) {
+        setActionMessage({ text: `Campaign successfully ${action}d.`, type: 'success' });
+        fetchAdminData();
+      }
+    } catch {}
+  };
+
+  const handleSubmissionAction = async (id: string, action: 'approved' | 'rejected', reason?: string) => {
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch(`/api/admin/submissions/${id}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action, reason: reason || 'Approved by administrator' })
+      });
+      if (res.ok) {
+        setActionMessage({ text: `Submission ${action} successfully.`, type: 'success' });
+        fetchAdminData();
+        triggerRefresh();
+      }
+    } catch {}
+  };
+
+  const handleToggleUserRole = async (targetUser: AdminUserDetail) => {
+    try {
+      const newRole = targetUser.role === 'advertiser' ? 'user' : 'advertiser';
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch(`/api/admin/users/${targetUser.id}/role`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ role: newRole })
+      });
+      if (res.ok) {
+        setActionMessage({ text: `Updated role for ${targetUser.email} to ${newRole}.`, type: 'success' });
+        fetchAdminData();
+      }
+    } catch {}
+  };
+
   const filteredUsers = usersList.filter(u => {
     const q = userSearchQuery.toLowerCase().trim();
     if (!q) return true;
@@ -168,36 +472,113 @@ export const AdminView: React.FC<AdminViewProps> = ({ user, adminUser, onRefresh
       u.displayName?.toLowerCase().includes(q) ||
       u.email?.toLowerCase().includes(q) ||
       u.whatsappNumber?.toLowerCase().includes(q) ||
-      u.phoneNumber?.toLowerCase().includes(q) ||
-      u.externalOpaqueId?.toLowerCase().includes(q) ||
       u.id.toLowerCase().includes(q)
     );
   });
+
+  if (!adminUser || adminUser.role !== 'admin') {
+    return (
+      <div className="max-w-md mx-auto my-12 px-4">
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-6 sm:p-8 text-center text-white relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-cyan-400 via-sky-500 to-indigo-500" />
+
+          <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center mx-auto mb-4 shadow-inner">
+            <ShieldCheck className="w-8 h-8" />
+          </div>
+
+          <h3 className="text-xl font-black tracking-tight text-white">
+            Reward River Command Center
+          </h3>
+          <p className="text-xs text-cyan-400 font-semibold mt-1">
+            Architected by Injazify Studios by Rayan Mirza (injazify.com)
+          </p>
+          <p className="text-xs text-slate-400 mt-2 mb-6">
+            Enter authorized administrator credentials to manage providers, ad units, 60/40 treasury, and payouts.
+          </p>
+
+          {adminLoginError && (
+            <div className="mb-4 p-3 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-300 text-xs text-left">
+              {adminLoginError}
+            </div>
+          )}
+
+          <form onSubmit={(e) => handleAdminLogin(e)} className="space-y-4 text-left">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Admin Email</label>
+              <input
+                type="email"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+                required
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/90 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Admin Password</label>
+              <input
+                type="password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                required
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/90 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={adminLoginLoading}
+              className="w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 font-bold text-sm text-white shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {adminLoginLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+              <span>Authenticate to Command Center</span>
+            </button>
+          </form>
+
+          <div className="mt-5 pt-5 border-t border-slate-800">
+            <button
+              type="button"
+              onClick={() => handleAdminLogin(undefined, 'admin@rewardriver.com', 'admin123')}
+              disabled={adminLoginLoading}
+              className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-cyan-300 transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <span>⚡ One-Click Master Admin Login (Demo / Vercel)</span>
+            </button>
+            <p className="text-[11px] text-slate-500 mt-2">
+              Default credentials: <code className="text-slate-400">admin@rewardriver.com</code> / <code className="text-slate-400">admin123</code>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <ShieldCheck className="w-6 h-6 text-emerald-600" />
-            <span>Reward River Administration</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-900 text-white">
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <ShieldCheck className="w-7 h-7 text-sky-600" />
+            <span>Reward River Master Control</span>
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-900 text-white">
               Super Admin
             </span>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Audit rewards ledger, manage registered users, process pending USDT withdrawals, test postbacks, and set risk controls.
+          <p className="text-xs text-slate-500 mt-1">
+            Complete executive portal: 60% Treasury Revenue, Direct Provider Integrations, Universal Ad Manager, 40% User Payouts & Commission Controls.
+            <span className="ml-2 font-semibold text-sky-600">• Built by Injazify Studios by Rayan Mirza (injazify.com)</span>
           </p>
         </div>
 
         <button
           onClick={fetchAdminData}
           disabled={loading}
-          className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-700 transition-colors shrink-0"
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-700 shadow-sm transition shrink-0"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          <span>Refresh Queue</span>
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          <span>Refresh All</span>
         </button>
       </div>
 
@@ -206,7 +587,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ user, adminUser, onRefresh
           className={`p-3.5 rounded-xl border text-xs flex items-center justify-between ${
             actionMessage.type === 'success'
               ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-              : 'bg-red-50 border-red-200 text-red-800'
+              : 'bg-rose-50 border-rose-200 text-rose-800'
           }`}
         >
           <span>{actionMessage.text}</span>
@@ -216,359 +597,652 @@ export const AdminView: React.FC<AdminViewProps> = ({ user, adminUser, onRefresh
         </div>
       )}
 
-      {/* Overview Stat Cards */}
-      {overview && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <button
-            onClick={() => setActiveSubTab('users')}
-            className={`bg-white rounded-2xl p-4 border text-left transition-all group cursor-pointer ${
-              activeSubTab === 'users'
-                ? 'border-emerald-500 ring-2 ring-emerald-500/20 shadow-md'
-                : 'border-slate-200 hover:border-emerald-300 hover:shadow-sm'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold text-slate-400 uppercase">Total Users</span>
-              <Users className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors" />
-            </div>
-            <div className="text-2xl font-extrabold text-slate-900 mt-1">{overview.totalUsers}</div>
-            <div className="text-[10px] font-semibold text-emerald-600 mt-1 flex items-center gap-0.5">
-              <span>View user directory</span>
-              <span>→</span>
-            </div>
-          </button>
-
-          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase">Total Credited</span>
-            <div className="text-2xl font-extrabold text-emerald-600 mt-1">
-              ${(overview.totalRewardsCreditedCents / 100).toFixed(2)}
-            </div>
+      {/* Financial Executive Summary Cards (60% Platform Profit vs 40% User Share) */}
+      {financials && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+          <div className="bg-slate-900 text-white p-4 rounded-2xl shadow-md border border-slate-800">
+            <span className="text-[11px] text-slate-400 font-semibold block">Reward River 60% Profit</span>
+            <span className="text-2xl font-black text-emerald-400 block mt-1">
+              {financials.platformProfitFormatted}
+            </span>
+            <span className="text-[10px] text-slate-400 block mt-0.5 font-mono">
+              +{financials.platformProfitPoints.toLocaleString()} Points Retained
+            </span>
           </div>
 
-          <button
-            onClick={() => setActiveSubTab('withdrawals')}
-            className={`bg-white rounded-2xl p-4 border text-left transition-all group cursor-pointer ${
-              activeSubTab === 'withdrawals'
-                ? 'border-amber-500 ring-2 ring-amber-500/20 shadow-md'
-                : 'border-slate-200 hover:border-amber-300 hover:shadow-sm'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold text-slate-400 uppercase">Pending Withdrawals</span>
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-            </div>
-            <div className="text-2xl font-extrabold text-amber-600 mt-1">
-              {overview.pendingWithdrawalCount}
-            </div>
-            <div className="text-[10px] font-semibold text-amber-600 mt-1">Review queue →</div>
-          </button>
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+            <span className="text-[11px] text-slate-500 font-semibold block">Total Gross Network Inflow</span>
+            <span className="text-2xl font-black text-slate-900 block mt-1">
+              {financials.grossInflowFormatted}
+            </span>
+            <span className="text-[10px] text-slate-400 block mt-0.5 font-mono">
+              {financials.grossInflowPoints.toLocaleString()} Total Provider Pts
+            </span>
+          </div>
 
-          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase">Settled USDT Paid</span>
-            <div className="text-2xl font-extrabold text-emerald-700 font-mono mt-1">
-              ${overview.paidWithdrawalTotalUsdt || '0.00'} USDT
-            </div>
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+            <span className="text-[11px] text-slate-500 font-semibold block">40% User Payouts Disbursed</span>
+            <span className="text-2xl font-black text-sky-600 block mt-1">
+              {financials.userDisbursedFormatted}
+            </span>
+            <span className="text-[10px] text-slate-400 block mt-0.5 font-mono">
+              {financials.userDisbursedPoints.toLocaleString()} Pts to Workers
+            </span>
+          </div>
+
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+            <span className="text-[11px] text-slate-500 font-semibold block">Pending Withdrawals Queue</span>
+            <span className="text-2xl font-black text-amber-600 block mt-1">
+              {financials.pendingWithdrawalsFormatted}
+            </span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">
+              {withdrawals.filter(w => ['requested', 'under_review'].includes(w.status)).length} requests waiting
+            </span>
+          </div>
+
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+            <span className="text-[11px] text-slate-500 font-semibold block">Net Retained Cash</span>
+            <span className="text-2xl font-black text-indigo-600 block mt-1">
+              {financials.netRetainedFormatted}
+            </span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">
+              Profit minus pending payouts
+            </span>
           </div>
         </div>
       )}
 
-      {/* Sub-Tab Navigation */}
-      <div className="flex items-center gap-1 border-b border-slate-200 pb-2 text-xs overflow-x-auto">
+      {/* Navigation Sub-Tabs */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-200 scrollbar-none">
         <button
-          onClick={() => setActiveSubTab('withdrawals')}
-          className={`px-4 py-2 rounded-xl font-bold transition-colors whitespace-nowrap ${
-            activeSubTab === 'withdrawals'
-              ? 'bg-emerald-600 text-white shadow-sm'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          onClick={() => setActiveSubTab('financials')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+            activeSubTab === 'financials'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
-          Withdrawal Review Queue ({withdrawals.filter(w => ['requested', 'under_review'].includes(w.status)).length})
+          <TrendingUp className="w-3.5 h-3.5" />
+          <span>60% Treasury & Financials</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('providers')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+            activeSubTab === 'providers'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Globe className="w-3.5 h-3.5" />
+          <span>Integrate Providers & Partners ({providers.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('ads')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+            activeSubTab === 'ads'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Code className="w-3.5 h-3.5" />
+          <span>Universal Ad Slots ({adSlots.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('commissions')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+            activeSubTab === 'commissions'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Sliders className="w-3.5 h-3.5" />
+          <span>Commissions & Margins (60/40)</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('withdrawals')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+            activeSubTab === 'withdrawals'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <DollarSign className="w-3.5 h-3.5" />
+          <span>USDT Withdrawals ({withdrawals.filter(w => w.status === 'requested').length})</span>
         </button>
 
         <button
           onClick={() => setActiveSubTab('users')}
-          className={`px-4 py-2 rounded-xl font-bold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
             activeSubTab === 'users'
-              ? 'bg-emerald-600 text-white shadow-sm'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
           <Users className="w-3.5 h-3.5" />
-          <span>User Directory ({usersList.length})</span>
+          <span>Users & Balance Control ({usersList.length})</span>
         </button>
 
         <button
-          onClick={() => setActiveSubTab('cpx_tester')}
-          className={`px-4 py-2 rounded-xl font-bold transition-colors whitespace-nowrap ${
-            activeSubTab === 'cpx_tester'
-              ? 'bg-emerald-600 text-white shadow-sm'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          onClick={() => setActiveSubTab('campaigns')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+            activeSubTab === 'campaigns'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
-          Survey Postback & Webhook Tester
+          <Layers className="w-3.5 h-3.5" />
+          <span>Campaigns ({campaignsList.length})</span>
         </button>
 
         <button
-          onClick={() => setActiveSubTab('settings')}
-          className={`px-4 py-2 rounded-xl font-bold transition-colors whitespace-nowrap ${
-            activeSubTab === 'settings'
-              ? 'bg-emerald-600 text-white shadow-sm'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          onClick={() => setActiveSubTab('submissions')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+            activeSubTab === 'submissions'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
-          Platform Settings
+          <CheckSquare className="w-3.5 h-3.5" />
+          <span>Proofs Queue ({submissionsList.filter(s => s.status === 'pending_review').length})</span>
         </button>
 
         <button
-          onClick={() => setActiveSubTab('audit_logs')}
-          className={`px-4 py-2 rounded-xl font-bold transition-colors whitespace-nowrap ${
-            activeSubTab === 'audit_logs'
-              ? 'bg-emerald-600 text-white shadow-sm'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          onClick={() => setActiveSubTab('simulator')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+            activeSubTab === 'simulator'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
-          Audit Logs
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span>1-Click Postback Simulator</span>
         </button>
       </div>
 
-      {/* Sub-Tab 1: Withdrawal Review Queue */}
-      {activeSubTab === 'withdrawals' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900">Pending USDT Withdrawal Requests</h3>
-            <span className="text-xs font-semibold text-slate-500">
-              {withdrawals.length} Total Requests
-            </span>
-          </div>
+      {/* TAB 1: 60% TREASURY & FINANCIALS */}
+      {activeSubTab === 'financials' && (
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+            <h3 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-emerald-600" />
+              <span>Platform Treasury Revenue Stream</span>
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Real-time ledger recording the exact 60% margin kept by Reward River on all surveys, offerwalls, micro-tasks, and ad monetization events.
+            </p>
 
-          {withdrawals.length === 0 ? (
-            <div className="p-8 text-center text-slate-500 text-xs">
-              No withdrawal requests pending in the review queue.
-            </div>
-          ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
-                    <th className="p-3">User Email</th>
-                    <th className="p-3">Network</th>
-                    <th className="p-3">USDT Address</th>
-                    <th className="p-3">Requested USD</th>
-                    <th className="p-3">Net USDT Payout</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3">Date</th>
-                    <th className="p-3 text-right">Actions</th>
+                  <tr className="border-b border-slate-200 text-slate-400 font-semibold">
+                    <th className="py-2.5 px-3">Date</th>
+                    <th className="py-2.5 px-3">Provider / Source</th>
+                    <th className="py-2.5 px-3">Worker</th>
+                    <th className="py-2.5 px-3 text-right">Gross Paid</th>
+                    <th className="py-2.5 px-3 text-right">Worker Share (40%)</th>
+                    <th className="py-2.5 px-3 text-right text-emerald-600 font-bold">Reward River Profit (60%)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {withdrawals.map(req => (
-                    <tr key={req.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="p-3 font-semibold text-slate-900">{req.userEmail}</td>
-                      <td className="p-3 font-mono text-emerald-700 font-bold">{req.network}</td>
-                      <td className="p-3 font-mono text-[11px] text-slate-600 max-w-[150px] truncate" title={req.usdtAddress}>
-                        {req.usdtAddress}
-                      </td>
-                      <td className="p-3 font-semibold">${(req.amountCents / 100).toFixed(2)}</td>
-                      <td className="p-3 font-bold text-emerald-600 font-mono">{req.netUsdt} USDT</td>
-                      <td className="p-3">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          req.status === 'paid' ? 'bg-emerald-100 text-emerald-800' :
-                          req.status === 'under_review' ? 'bg-amber-100 text-amber-800' :
-                          req.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                          'bg-slate-100 text-slate-700'
-                        }`}>
-                          {req.status}
-                        </span>
-                      </td>
-                      <td className="p-3 text-slate-400">{new Date(req.createdAt).toLocaleDateString()}</td>
-                      <td className="p-3 text-right space-x-1.5 whitespace-nowrap">
-                        {['requested', 'under_review'].includes(req.status) && (
-                          <>
-                            <button
-                              onClick={() => setPayoutModal({ id: req.id, txHash: '', notes: '' })}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition-colors text-[11px]"
-                            >
-                              Pay USDT
-                            </button>
-                            <button
-                              onClick={() => handleReviewAction(req.id, 'reject', 'Rejected by risk check')}
-                              className="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 font-semibold rounded-lg transition-colors text-[11px]"
-                            >
-                              Reject
-                            </button>
-                          </>
-                        )}
-                        {req.txHash && (
-                          <a
-                            href={req.network === 'TRC20' ? `https://tronscan.org/#/transaction/${req.txHash}` : `https://etherscan.io/tx/${req.txHash}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-[11px]"
-                          >
-                            <span>TxID</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        )}
+                <tbody className="divide-y divide-slate-100">
+                  {treasuryLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-slate-400">
+                        No transactions recorded in platform treasury yet. Use the 1-Click Simulator to test!
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    treasuryLogs.map(log => (
+                      <tr key={log.id} className="hover:bg-slate-50 transition">
+                        <td className="py-3 px-3 text-slate-500 whitespace-nowrap">
+                          {new Date(log.createdAt).toLocaleDateString()} {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className="font-bold text-slate-900">{log.providerName}</span>
+                          <span className="text-[10px] text-slate-400 block uppercase font-mono">{log.sourceType}</span>
+                        </td>
+                        <td className="py-3 px-3 text-slate-600">
+                          {log.userEmail || log.userId || 'Direct Earner'}
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono text-slate-500">
+                          ${(log.grossAmountCents / 100).toFixed(2)}
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono text-sky-600">
+                          +${(log.userShareCents / 100).toFixed(2)}
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono text-emerald-600 font-black">
+                          +${(log.platformShareCents / 100).toFixed(2)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
         </div>
       )}
 
-      {/* Sub-Tab 2: User Directory & Accounts Analytics */}
-      {activeSubTab === 'users' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden space-y-4 p-5">
-          {/* Top Search & Filter Bar */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+      {/* TAB 2: PROVIDERS & PARTNER INTEGRATION */}
+      {activeSubTab === 'providers' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Users className="w-5 h-5 text-emerald-600" />
-                <span>Registered User Directory & Accounts</span>
-              </h3>
+              <h3 className="text-base font-bold text-slate-900">Direct Partner Companies & Gateways</h3>
               <p className="text-xs text-slate-500">
-                View all registered accounts, WhatsApp contact details, Google profiles, survey participation counts, and USDT balances.
+                Connect external offerwalls (CPX, Aoyco, AdvertsReward, BitLabs, Monlix, Timewall, etc.). All providers automatically display under direct Reward River white-label branding.
               </p>
             </div>
+            <button
+              onClick={() =>
+                setProviderModal({
+                  id: '',
+                  name: '',
+                  publicBrandName: 'Reward River Direct Gateway • Stream',
+                  tagline: 'Direct High-Yield Earning Stream',
+                  description: 'Verified direct earning gateway with instant crediting to your balance.',
+                  category: 'offers',
+                  enabled: true,
+                  launchUrlTemplate: 'https://example.com/wall?pub_id={app_id}&subid={external_id}',
+                  appId: '',
+                  secretKey: '',
+                  userSharePercent: 40,
+                  platformSharePercent: 60,
+                  icon: 'RR',
+                  badge: 'Direct Stream'
+                })
+              }
+              className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Integrate New Partner</span>
+            </button>
+          </div>
 
-            <div className="relative w-full sm:w-72">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {providers.map(p => (
+              <div
+                key={p.id}
+                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="w-10 h-10 rounded-xl bg-slate-900 text-white font-black text-xs flex items-center justify-center">
+                      {p.icon || 'RR'}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                        {p.userSharePercent}% User / {p.platformSharePercent}% Platform
+                      </span>
+                      <button
+                        onClick={() => handleToggleProvider(p)}
+                        className={`w-9 h-5 flex items-center rounded-full p-0.5 transition ${
+                          p.enabled ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'
+                        }`}
+                      >
+                        <span className="w-4 h-4 bg-white rounded-full shadow-xs" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <h4 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                    <span>{p.name}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">({p.id})</span>
+                  </h4>
+                  <p className="text-xs text-sky-600 font-semibold mt-0.5">{p.publicBrandName}</p>
+                  <p className="text-[11px] text-slate-500 mt-2 line-clamp-2">{p.description}</p>
+
+                  {/* S2S Webhook URL */}
+                  <div className="mt-3.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">S2S Postback Webhook</span>
+                      <button
+                        onClick={() =>
+                          copyToClipboard(
+                            `${window.location.origin}/api/postback/${p.id}`,
+                            `postback_${p.id}`
+                          )
+                        }
+                        className="text-[10px] font-bold text-sky-600 hover:text-sky-700 flex items-center gap-1"
+                      >
+                        {copiedId === `postback_${p.id}` ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedId === `postback_${p.id}` ? 'Copied' : 'Copy URL'}</span>
+                      </button>
+                    </div>
+                    <code className="text-[11px] font-mono text-slate-700 break-all select-all block">
+                      {window.location.origin}/api/postback/{p.id}
+                    </code>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <span className="text-slate-400 text-[11px] capitalize">{p.category}</span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setProviderModal(p)}
+                      className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition"
+                      title="Edit Provider"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteProvider(p.id)}
+                      className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition"
+                      title="Delete Provider"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: UNIVERSAL AD SLOTS MANAGER */}
+      {activeSubTab === 'ads' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Universal Ad Network & Banner Manager</h3>
+              <p className="text-xs text-slate-500">
+                Paste any advertising script or tag (Google AdSense, Adsterra, PropellerAds, Monetag, A-Ads, or direct HTML banners).
+              </p>
+            </div>
+            <button
+              onClick={() =>
+                setEditingAdSlot({
+                  id: `ad_slot_${Date.now()}`,
+                  name: 'Custom Ad Placement',
+                  placement: 'sticky_bottom',
+                  format: 'responsive',
+                  enabled: true,
+                  adCode: '<div style="background:#0f172a;color:#38bdf8;padding:12px;text-align:center;border-radius:8px;">Custom Sponsor Banner</div>',
+                  updatedAt: new Date().toISOString()
+                })
+              }
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Ad Slot</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {adSlots.map(slot => (
+              <div key={slot.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-slate-900 text-sm">{slot.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                        {slot.format} • {slot.placement}
+                      </span>
+                      <button
+                        onClick={() => handleToggleAdSlot(slot)}
+                        className={`w-9 h-5 flex items-center rounded-full p-0.5 transition ${
+                          slot.enabled ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'
+                        }`}
+                      >
+                        <span className="w-4 h-4 bg-white rounded-full shadow-xs" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Live Render Preview Frame */}
+                  <div className="mt-3 bg-slate-50 border border-slate-200 rounded-xl p-2.5 overflow-hidden">
+                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1.5 flex items-center justify-between">
+                      <span>Live Render Frame</span>
+                      <span>{slot.enabled ? 'Active' : 'Disabled'}</span>
+                    </div>
+                    <div className="flex justify-center bg-transparent overflow-hidden">
+                      <iframe
+                        title={slot.name}
+                        srcDoc={`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;padding:0;background:transparent;overflow:hidden;font-family:sans-serif;}body{display:flex;align-items:center;justify-content:center;min-height:100vh;}img,iframe{max-width:100%;}</style></head><body>${slot.adCode || '<div style="color:#94a3b8;font-size:12px;">No Ad Code Configured</div>'}</body></html>`}
+                        className="w-full border-0 rounded-lg min-h-[90px] overflow-hidden"
+                        sandbox="allow-scripts allow-same-origin allow-popups"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-[11px] font-mono text-slate-400">{slot.id}</span>
+                  <button
+                    onClick={() => setEditingAdSlot(slot)}
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold flex items-center gap-1 transition"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                    <span>Edit Ad Code</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: COMMISSIONS & MARGINS (60/40) */}
+      {activeSubTab === 'commissions' && settings && (
+        <form onSubmit={handleSaveSettings} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
+          <div>
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Sliders className="w-5 h-5 text-sky-600" />
+              <span>Platform Commission & Profit Margins</span>
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Control the default revenue split. User only sees their percentage share; the Reward River margin is kept invisibly in the platform treasury.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50">
+              <label className="block text-xs font-bold text-emerald-900 mb-1">
+                Reward River Platform Profit %
+              </label>
               <input
-                type="text"
-                placeholder="Search name, email, WhatsApp, ID..."
-                value={userSearchQuery}
-                onChange={e => setUserSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+                type="number"
+                min="0"
+                max="100"
+                value={settings.defaultPlatformSharePercent ?? 60}
+                onChange={e => {
+                  const val = Number(e.target.value);
+                  setSettings({
+                    ...settings,
+                    defaultPlatformSharePercent: val,
+                    defaultUserSharePercent: 100 - val
+                  });
+                }}
+                className="w-full px-3 py-2 text-base font-black text-emerald-900 rounded-lg border border-emerald-300 bg-white"
+              />
+              <span className="text-[10px] text-emerald-700 mt-1 block">Default: 60% retained profit</span>
+            </div>
+
+            <div className="p-4 rounded-xl border border-sky-200 bg-sky-50/50">
+              <label className="block text-xs font-bold text-sky-900 mb-1">
+                Worker User Share %
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={settings.defaultUserSharePercent ?? 40}
+                onChange={e => {
+                  const val = Number(e.target.value);
+                  setSettings({
+                    ...settings,
+                    defaultUserSharePercent: val,
+                    defaultPlatformSharePercent: 100 - val
+                  });
+                }}
+                className="w-full px-3 py-2 text-base font-black text-sky-900 rounded-lg border border-sky-300 bg-white"
+              />
+              <span className="text-[10px] text-sky-700 mt-1 block">Default: 40% paid to worker</span>
+            </div>
+
+            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Points Rate Per $1.00 USD
+              </label>
+              <input
+                type="number"
+                value={settings.pointsRatePerUsd || 10000}
+                onChange={e => setSettings({ ...settings, pointsRatePerUsd: Number(e.target.value) })}
+                className="w-full px-3 py-2 text-base font-black text-slate-900 rounded-lg border border-slate-300 bg-white"
+              />
+              <span className="text-[10px] text-slate-500 mt-1 block">Standard: 10,000 Points = $1</span>
+            </div>
+
+            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Advertiser Campaign Fee %
+              </label>
+              <input
+                type="number"
+                value={settings.platformFeePercent || 10}
+                onChange={e => setSettings({ ...settings, platformFeePercent: Number(e.target.value) })}
+                className="w-full px-3 py-2 text-base font-black text-slate-900 rounded-lg border border-slate-300 bg-white"
+              />
+              <span className="text-[10px] text-slate-500 mt-1 block">Standard: 10% on campaign budget</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-100">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Min Withdrawal ($)</label>
+              <input
+                type="number"
+                value={(settings.minWithdrawalCents || 500) / 100}
+                onChange={e => setSettings({ ...settings, minWithdrawalCents: Number(e.target.value) * 100 })}
+                className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">TRC-20 Network Fee ($)</label>
+              <input
+                type="number"
+                value={(settings.feeCentsTrc20 || 100) / 100}
+                onChange={e => setSettings({ ...settings, feeCentsTrc20: Number(e.target.value) * 100 })}
+                className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">ERC-20 Network Fee ($)</label>
+              <input
+                type="number"
+                value={(settings.feeCentsErc20 || 250) / 100}
+                onChange={e => setSettings({ ...settings, feeCentsErc20: Number(e.target.value) * 100 })}
+                className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200"
               />
             </div>
           </div>
 
-          {/* User Table */}
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
-            <table className="w-full text-left border-collapse text-xs">
+          <div className="flex justify-end pt-4">
+            <button
+              type="submit"
+              className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-md transition"
+            >
+              Save Commission Settings
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* TAB 5: USDT WITHDRAWALS QUEUE */}
+      {activeSubTab === 'withdrawals' && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-rose-600" />
+              <span>USDT Withdrawal Requests Queue</span>
+            </h3>
+            <span className="text-xs text-slate-400 font-semibold">
+              {withdrawals.length} Total Requests
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
               <thead>
-                <tr className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
-                  <th className="p-3">User / Profile</th>
-                  <th className="p-3">WhatsApp / Phone</th>
-                  <th className="p-3">Auth Method</th>
-                  <th className="p-3">Joined Date</th>
-                  <th className="p-3">Earned / Available</th>
-                  <th className="p-3">Surveys</th>
-                  <th className="p-3 text-right">Actions</th>
+                <tr className="border-b border-slate-200 text-slate-400 font-semibold">
+                  <th className="py-2.5 px-3">Date</th>
+                  <th className="py-2.5 px-3">User</th>
+                  <th className="py-2.5 px-3">Amount</th>
+                  <th className="py-2.5 px-3">Destination Address</th>
+                  <th className="py-2.5 px-3">Network</th>
+                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {filteredUsers.length === 0 ? (
+              <tbody className="divide-y divide-slate-100">
+                {withdrawals.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-400 italic">
-                      No matching user accounts found.
+                    <td colSpan={7} className="py-8 text-center text-slate-400">
+                      No withdrawal requests in queue.
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map(u => {
-                    const availableUsdt = (u.balances?.availableCents / 100 || 0).toFixed(2);
-                    const totalEarnedUsdt = (u.balances?.totalEarnedCents / 100 || 0).toFixed(2);
-                    const rawPhone = u.whatsappNumber || u.phoneNumber || '';
-                    const cleanPhone = rawPhone.replace(/[^\d]/g, '');
-
-                    return (
-                      <tr key={u.id} className="hover:bg-slate-50 transition-colors">
-                        {/* User Profile Cell */}
-                        <td className="p-3">
-                          <div className="flex items-center gap-3">
-                            {u.photoURL ? (
-                              <img
-                                src={u.photoURL}
-                                alt={u.displayName}
-                                className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
-                              />
-                            ) : (
-                              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 text-white font-bold flex items-center justify-center text-xs shrink-0 uppercase shadow-xs">
-                                {u.displayName?.[0] || u.email[0]}
-                              </div>
-                            )}
-
-                            <div>
-                              <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                                <span>{u.displayName || 'Member'}</span>
-                                {u.emailVerified && (
-                                  <span title="Email Verified"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" /></span>
-                                )}
-                                {u.role === 'admin' && (
-                                  <span className="px-1.5 py-0.2 rounded bg-slate-900 text-white font-extrabold text-[9px]">
-                                    ADMIN
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-[11px] font-mono text-slate-500">{u.email}</div>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* WhatsApp Contact Cell */}
-                        <td className="p-3">
-                          {cleanPhone ? (
-                            <a
-                              href={`https://wa.me/${cleanPhone}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold text-xs border border-emerald-200/80 transition-colors"
-                              title="Click to open WhatsApp chat"
+                  withdrawals.map(w => (
+                    <tr key={w.id} className="hover:bg-slate-50 transition">
+                      <td className="py-3 px-3 text-slate-500 whitespace-nowrap">
+                        {new Date(w.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="py-3 px-3 font-semibold text-slate-900">{w.userEmail}</td>
+                      <td className="py-3 px-3 font-bold font-mono text-emerald-600">
+                        ${(w.amountCents / 100).toFixed(2)} USDT
+                      </td>
+                      <td className="py-3 px-3 font-mono text-slate-600 truncate max-w-[200px]" title={w.usdtAddress}>
+                        {w.usdtAddress}
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                          {w.network}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3">
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            w.status === 'paid'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : w.status === 'rejected'
+                              ? 'bg-rose-100 text-rose-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {w.status.toUpperCase()}
+                        </span>
+                        {w.txHash && (
+                          <span className="block text-[10px] font-mono text-slate-400 truncate max-w-[120px]">
+                            {w.txHash}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-right whitespace-nowrap">
+                        {w.status === 'requested' || w.status === 'under_review' ? (
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => setPayoutModal({ id: w.id, txHash: '', notes: 'Approved via TRC-20' })}
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow-xs"
                             >
-                              <MessageSquare className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                              <span>{rawPhone}</span>
-                              <ExternalLink className="w-3 h-3 text-emerald-500" />
-                            </a>
-                          ) : (
-                            <span className="text-slate-400 italic text-[11px]">Not provided</span>
-                          )}
-                        </td>
-
-                        {/* Auth Provider Cell */}
-                        <td className="p-3">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium text-[11px]">
-                            {u.photoURL || u.provider === 'google.com' ? 'Google Auth' : 'Email/Password'}
-                          </span>
-                        </td>
-
-                        {/* Joined Date Cell */}
-                        <td className="p-3 text-slate-500 text-xs">
-                          {new Date(u.createdAt).toLocaleDateString()}
-                        </td>
-
-                        {/* Earned / Available Balance Cell */}
-                        <td className="p-3 font-mono">
-                          <div className="font-bold text-emerald-600 text-xs">
-                            ${availableUsdt} USDT <span className="text-[10px] text-slate-400 font-sans font-normal">(Avail)</span>
+                              Approve & Pay
+                            </button>
+                            <button
+                              onClick={() => setRejectModal({ id: w.id, reason: 'Invalid address or verification required.' })}
+                              className="px-2.5 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-bold transition"
+                            >
+                              Reject & Refund
+                            </button>
                           </div>
-                          <div className="text-[10px] text-slate-500 font-sans">
-                            Total Earned: ${totalEarnedUsdt}
-                          </div>
-                        </td>
-
-                        {/* Surveys Completed Cell */}
-                        <td className="p-3 font-bold text-slate-800 text-center">
-                          <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800">
-                            {u.completedSurveysCount || 0}
-                          </span>
-                        </td>
-
-                        {/* Actions Cell */}
-                        <td className="p-3 text-right">
-                          <button
-                            onClick={() => setSelectedUserDetail(u)}
-                            className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors inline-flex items-center gap-1 shadow-2xs"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            <span>Details</span>
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
+                        ) : (
+                          <span className="text-slate-400 text-xs">Processed</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
@@ -576,297 +1250,710 @@ export const AdminView: React.FC<AdminViewProps> = ({ user, adminUser, onRefresh
         </div>
       )}
 
-      {/* Sub-Tab 3: Survey Postback Webhook Tester */}
-      {activeSubTab === 'cpx_tester' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+      {/* TAB 6: USERS & BALANCE CONTROL */}
+      {activeSubTab === 'users' && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">User Directory & Platform Profit Contribution</h3>
+              <p className="text-xs text-slate-500">
+                View user earnings, individual 60% profit earned for Reward River, and manually credit/debit balances.
+              </p>
+            </div>
+            <div className="relative w-full sm:w-64">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                placeholder="Search email, name or ID..."
+                value={userSearchQuery}
+                onChange={e => setUserSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-400 font-semibold">
+                  <th className="py-2.5 px-3">User</th>
+                  <th className="py-2.5 px-3">Role</th>
+                  <th className="py-2.5 px-3">Available Balance</th>
+                  <th className="py-2.5 px-3 text-emerald-600 font-bold">Reward River Profit Made</th>
+                  <th className="py-2.5 px-3">Surveys / Tasks</th>
+                  <th className="py-2.5 px-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredUsers.map(u => (
+                  <tr key={u.id} className="hover:bg-slate-50 transition">
+                    <td className="py-3 px-3">
+                      <span className="font-bold text-slate-900 block">{u.email}</span>
+                      <span className="text-[10px] text-slate-400">{u.displayName || 'No display name'} • Joined {new Date(u.createdAt).toLocaleDateString()}</span>
+                    </td>
+                    <td className="py-3 px-3">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          u.role === 'admin'
+                            ? 'bg-slate-900 text-white'
+                            : u.role === 'advertiser'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-sky-100 text-sky-800'
+                        }`}
+                      >
+                        {u.role.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 font-mono font-bold text-slate-900">
+                      ${((u.balances?.availableCents || 0) / 100).toFixed(2)}
+                      <span className="text-[10px] text-slate-400 block font-normal">
+                        {((u.balances?.availableCents || 0) * 100).toLocaleString()} Points
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 font-mono font-black text-emerald-600">
+                      {u.platformProfitGeneratedFormatted || '$0.00'}
+                    </td>
+                    <td className="py-3 px-3 text-slate-500">
+                      {u.completedSurveysCount || 0} surveys • {u.completedTasksCount || 0} tasks
+                    </td>
+                    <td className="py-3 px-3 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => setBalanceModalUser(u)}
+                          className="px-2.5 py-1 bg-sky-50 text-sky-700 hover:bg-sky-100 rounded-lg text-xs font-bold transition"
+                        >
+                          Adjust Balance
+                        </button>
+                        <button
+                          onClick={() => handleToggleUserRole(u)}
+                          className="px-2.5 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-bold transition"
+                        >
+                          Role
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 7: CAMPAIGNS MODERATION */}
+      {activeSubTab === 'campaigns' && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-slate-900">Advertiser Micro-Task Campaigns</h3>
+            <span className="text-xs text-slate-400">{campaignsList.length} Campaigns</span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-400 font-semibold">
+                  <th className="py-2.5 px-3">Title & Advertiser</th>
+                  <th className="py-2.5 px-3">Category</th>
+                  <th className="py-2.5 px-3">Reward</th>
+                  <th className="py-2.5 px-3">Slots</th>
+                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {campaignsList.map(c => (
+                  <tr key={c.id} className="hover:bg-slate-50 transition">
+                    <td className="py-3 px-3">
+                      <span className="font-bold text-slate-900 block">{c.title}</span>
+                      <span className="text-[10px] text-slate-400">{c.advertiserEmail}</span>
+                    </td>
+                    <td className="py-3 px-3 capitalize text-slate-600">{c.category}</td>
+                    <td className="py-3 px-3 font-mono font-bold text-sky-600">
+                      {c.rewardPoints.toLocaleString()} Pts (${(c.rewardCents / 100).toFixed(2)})
+                    </td>
+                    <td className="py-3 px-3 font-mono">
+                      {c.completedSlots} / {c.totalSlots}
+                    </td>
+                    <td className="py-3 px-3">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          c.status === 'active'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : c.status === 'completed'
+                            ? 'bg-slate-100 text-slate-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {c.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 text-right">
+                      {c.status === 'pending_approval' ? (
+                        <button
+                          onClick={() => handleCampaignAction(c.id, 'approve')}
+                          className="px-2.5 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold"
+                        >
+                          Approve
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleCampaignAction(c.id, c.status === 'active' ? 'pause' : 'resume')}
+                          className="px-2.5 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-bold"
+                        >
+                          {c.status === 'active' ? 'Pause' : 'Resume'}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 8: SUBMISSIONS QUEUE */}
+      {activeSubTab === 'submissions' && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-slate-900">Worker Proof Submissions Queue</h3>
+            <span className="text-xs text-slate-400">
+              {submissionsList.filter(s => s.status === 'pending_review').length} Pending Review
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {submissionsList.map(sub => (
+              <div key={sub.id} className="border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div>
+                  <h4 className="font-bold text-slate-900 text-sm">{sub.taskTitle}</h4>
+                  <p className="text-xs text-slate-500">Worker: {sub.workerEmail} • {new Date(sub.submittedAt).toLocaleString()}</p>
+                  {sub.proofText && (
+                    <p className="text-xs text-slate-700 bg-slate-50 p-2 rounded-lg mt-2 font-mono">{sub.proofText}</p>
+                  )}
+                  {sub.proofScreenshotUrl && (
+                    <button
+                      onClick={() => setPreviewImage(sub.proofScreenshotUrl!)}
+                      className="mt-2 text-xs text-sky-600 font-bold underline flex items-center gap-1"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> View Submitted Screenshot
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="font-mono font-bold text-sky-600 text-xs mr-2">
+                    +{sub.rewardPoints.toLocaleString()} Pts
+                  </span>
+                  {sub.status === 'pending_review' ? (
+                    <>
+                      <button
+                        onClick={() => handleSubmissionAction(sub.id, 'approved')}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleSubmissionAction(sub.id, 'rejected', 'Invalid proof provided')}
+                        className="px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-bold"
+                      >
+                        Reject
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-xs font-bold text-slate-400 uppercase">{sub.status}</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 9: 1-CLICK POSTBACK SIMULATOR */}
+      {activeSubTab === 'simulator' && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900">
-              Survey Postback Webhook Simulation & Testing Tool
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-amber-500" />
+              <span>1-Click Offerwall & Survey Postback Simulator</span>
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Simulate server-to-server postbacks received when a survey is finished. Test signature generation, idempotency checks, and ledger crediting in USDT.
+              Instantly test any provider integration. The simulator exercises the real postback engine, verifies the 60% platform treasury profit split, and credits 40% to the worker.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">
-                Reward Amount (Cents)
-              </label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Provider</label>
+              <select
+                value={simProvider}
+                onChange={e => setSimProvider(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200"
+              >
+                {providers.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.userSharePercent}% User / {p.platformSharePercent}% River)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Gross Provider Points</label>
               <input
                 type="number"
-                value={testAmountCents}
-                onChange={e => setTestAmountCents(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono text-sm"
+                value={simPoints}
+                onChange={e => setSimPoints(Number(e.target.value))}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 font-mono"
               />
-              <span className="text-[10px] text-slate-400 mt-1 block">
-                Equivalent to: {(testAmountCents / 100).toFixed(2)} USDT
+              <span className="text-[10px] text-slate-400 mt-0.5 block">
+                User gets 40% ({Math.round(simPoints * 0.4)} Pts), River gets 60% ({Math.round(simPoints * 0.6)} Pts)
               </span>
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">
-                Survey Offer ID
-              </label>
-              <input
-                type="text"
-                value={testOfferId}
-                onChange={e => setTestOfferId(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">
-                Callback Event Type
-              </label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Target User</label>
               <select
-                value={testStatus}
-                onChange={e => setTestStatus(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold"
+                value={simTargetUserId}
+                onChange={e => setSimTargetUserId(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200"
               >
-                <option value={1}>Status 1: Completed Survey (Credit)</option>
-                <option value={2}>Status 2: Cancelled / Reversed (Chargeback)</option>
-                <option value={3}>Status 3: Alternative Chargeback / Reversal</option>
+                <option value="">Admin User ({adminUser?.email || 'Self'})</option>
+                {usersList.slice(0, 15).map(u => (
+                  <option key={u.id} value={u.id}>
+                    {u.email}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
 
-          <button
-            onClick={handleSimulateCpxPostback}
-            className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all inline-flex items-center gap-2"
-          >
-            <Send className="w-3.5 h-3.5" />
-            <span>Dispatch Simulated Callback</span>
-          </button>
+          <div className="flex justify-end">
+            <button
+              onClick={handleSimulatePostback}
+              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition"
+            >
+              <Play className="w-4 h-4 text-emerald-400" />
+              <span>Fire Simulated S2S Webhook</span>
+            </button>
+          </div>
 
-          {testResult && (
-            <div className="p-4 rounded-xl bg-slate-900 text-slate-100 font-mono text-xs overflow-x-auto space-y-1">
-              <span className="text-emerald-400 font-bold block mb-1">
-                // Server Ledger Response:
-              </span>
-              <pre>{JSON.stringify(testResult, null, 2)}</pre>
+          {simResult && (
+            <div className="p-4 rounded-xl bg-slate-900 text-white font-mono text-xs space-y-2">
+              <span className="text-emerald-400 font-bold block">✓ Simulation Response:</span>
+              <pre className="text-[11px] overflow-x-auto text-slate-300">
+                {JSON.stringify(simResult, null, 2)}
+              </pre>
             </div>
           )}
         </div>
       )}
 
-      {/* Sub-Tab 4: Platform Settings */}
-      {activeSubTab === 'settings' && settings && (
-        <form onSubmit={handleSaveSettings} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6 text-xs">
-          <div>
-            <h3 className="text-base font-bold text-slate-900">Platform & Payout Controls</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Set USDT withdrawal thresholds, network fees, and system mode.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">
-                Minimum Withdrawal (Cents)
-              </label>
-              <input
-                type="number"
-                value={settings.minWithdrawalCents}
-                onChange={e => setSettings({ ...settings, minWithdrawalCents: Number(e.target.value) })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono text-sm"
-              />
-              <span className="text-[10px] text-slate-400 mt-1 block">
-                Current min: ${(settings.minWithdrawalCents / 100).toFixed(2)} USD
-              </span>
+      {/* MODAL: PROVIDER ADD / EDIT */}
+      {providerModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <h4 className="font-bold text-slate-900 text-sm">
+                {providerModal.id && providers.some(p => p.id === providerModal.id) ? 'Edit Provider' : 'Integrate New Partner Company'}
+              </h4>
+              <button onClick={() => setProviderModal(null)} className="p-1 rounded text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">
-                Maximum Withdrawal (Cents)
-              </label>
-              <input
-                type="number"
-                value={settings.maxWithdrawalCents}
-                onChange={e => setSettings({ ...settings, maxWithdrawalCents: Number(e.target.value) })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono text-sm"
-              />
-              <span className="text-[10px] text-slate-400 mt-1 block">
-                Current max: ${(settings.maxWithdrawalCents / 100).toFixed(2)} USD
-              </span>
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">
-                TRON (TRC-20) Network Fee (Cents)
-              </label>
-              <input
-                type="number"
-                value={settings.feeCentsTrc20}
-                onChange={e => setSettings({ ...settings, feeCentsTrc20: Number(e.target.value) })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">
-                Ethereum (ERC-20) Network Fee (Cents)
-              </label>
-              <input
-                type="number"
-                value={settings.feeCentsErc20}
-                onChange={e => setSettings({ ...settings, feeCentsErc20: Number(e.target.value) })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono text-sm"
-              />
-            </div>
-          </div>
-
-          <div className="pt-2">
-            <button
-              type="submit"
-              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-sm transition-all"
-            >
-              Save Platform Controls
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Sub-Tab 5: Audit Logs */}
-      {activeSubTab === 'audit_logs' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-          <div>
-            <h3 className="text-base font-bold text-slate-900">Administrative Audit Trail</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Immutable log of all administrative actions, risk approvals, and system changes.
-            </p>
-          </div>
-
-          <div className="divide-y divide-slate-100 text-xs">
-            {auditLogs.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 italic">
-                No administrative actions recorded yet.
-              </div>
-            ) : (
-              auditLogs.map((log: any) => (
-                <div key={log.id} className="py-3 flex items-start justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900">{log.action}</span>
-                      <span className="text-[11px] text-slate-500">by {log.adminEmail}</span>
-                    </div>
-                    <p className="text-slate-600 mt-0.5">{log.details}</p>
-                  </div>
-                  <span className="text-[11px] text-slate-400 shrink-0">
-                    {new Date(log.createdAt).toLocaleString()}
-                  </span>
+            <form onSubmit={handleSaveProvider} className="p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Company / Partner Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. BitLabs"
+                    value={providerModal.name || ''}
+                    onChange={e => setProviderModal({ ...providerModal, name: e.target.value })}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200"
+                  />
                 </div>
-              ))
-            )}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Unique Slug ID</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. bitlabs"
+                    value={providerModal.id || ''}
+                    onChange={e => setProviderModal({ ...providerModal, id: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Public White-Label Brand Name (Visible to Users)
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Reward River Direct Gateway • Stream Delta"
+                  value={providerModal.publicBrandName || ''}
+                  onChange={e => setProviderModal({ ...providerModal, publicBrandName: e.target.value })}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Launch URL Template (Macros: &#123;app_id&#125;, &#123;external_id&#125;, &#123;ip&#125;, &#123;secret&#125;)
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="https://wall.partner.com/load?app={app_id}&uid={external_id}"
+                  value={providerModal.launchUrlTemplate || ''}
+                  onChange={e => setProviderModal({ ...providerModal, launchUrlTemplate: e.target.value })}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 font-mono"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">App ID / Publisher ID</label>
+                  <input
+                    type="text"
+                    value={providerModal.appId || ''}
+                    onChange={e => setProviderModal({ ...providerModal, appId: e.target.value })}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Secret Key / Postback Token</label>
+                  <input
+                    type="text"
+                    value={providerModal.secretKey || ''}
+                    onChange={e => setProviderModal({ ...providerModal, secretKey: e.target.value })}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <div>
+                  <label className="block text-xs font-bold text-sky-900 mb-1">Worker Payout Share %</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="99"
+                    value={providerModal.userSharePercent ?? 40}
+                    onChange={e => {
+                      const val = Number(e.target.value);
+                      setProviderModal({
+                        ...providerModal,
+                        userSharePercent: val,
+                        platformSharePercent: 100 - val
+                      });
+                    }}
+                    className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 font-bold bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-emerald-900 mb-1">Reward River Profit %</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="99"
+                    value={providerModal.platformSharePercent ?? 60}
+                    onChange={e => {
+                      const val = Number(e.target.value);
+                      setProviderModal({
+                        ...providerModal,
+                        platformSharePercent: val,
+                        userSharePercent: 100 - val
+                      });
+                    }}
+                    className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 font-bold bg-white"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setProviderModal(null)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm"
+                >
+                  Save Partner Integration
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
-      {/* User Details Drawer Modal */}
-      {selectedUserDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-3xl p-6 max-w-lg w-full border border-slate-200 shadow-2xl space-y-5 relative overflow-hidden">
-            <button
-              onClick={() => setSelectedUserDetail(null)}
-              className="absolute top-4 right-4 p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
+      {/* MODAL: EDIT AD SLOT CODE */}
+      {editingAdSlot && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <h4 className="font-bold text-slate-900 text-sm">Edit Ad Slot: {editingAdSlot.name}</h4>
+              <button onClick={() => setEditingAdSlot(null)} className="p-1 rounded text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-            {/* Profile Header */}
-            <div className="flex items-center gap-4">
-              {selectedUserDetail.photoURL ? (
-                <img
-                  src={selectedUserDetail.photoURL}
-                  alt={selectedUserDetail.displayName}
-                  className="w-14 h-14 rounded-full object-cover border-2 border-emerald-500 shadow-sm"
+            <form onSubmit={handleSaveAdSlot} className="p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Slot Name</label>
+                  <input
+                    type="text"
+                    value={editingAdSlot.name}
+                    onChange={e => setEditingAdSlot({ ...editingAdSlot, name: e.target.value })}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Placement</label>
+                  <select
+                    value={editingAdSlot.placement}
+                    onChange={e => setEditingAdSlot({ ...editingAdSlot, placement: e.target.value as any })}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200"
+                  >
+                    <option value="sticky_bottom">Sticky Bottom Banner</option>
+                    <option value="sidebar">Sidebar Rail</option>
+                    <option value="tasks_top">Tasks Marketplace Header</option>
+                    <option value="surveys_top">Surveys Header</option>
+                    <option value="dashboard">Dashboard Card</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Ad Embed Code (HTML / Javascript / iframe / AdSense / Adsterra / PropellerAds tag)
+                </label>
+                <textarea
+                  rows={6}
+                  value={editingAdSlot.adCode}
+                  onChange={e => setEditingAdSlot({ ...editingAdSlot, adCode: e.target.value })}
+                  placeholder="<script async src='...'></script>"
+                  className="w-full p-3 text-xs rounded-xl border border-slate-200 font-mono bg-slate-900 text-emerald-400 focus:outline-none"
                 />
-              ) : (
-                <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 text-white font-extrabold text-xl flex items-center justify-center shadow-md uppercase">
-                  {selectedUserDetail.displayName?.[0] || selectedUserDetail.email[0]}
-                </div>
-              )}
-
-              <div>
-                <h4 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
-                  <span>{selectedUserDetail.displayName || 'Member'}</span>
-                  {selectedUserDetail.emailVerified && (
-                    <span title="Email Verified"><CheckCircle2 className="w-4 h-4 text-emerald-500" /></span>
-                  )}
-                </h4>
-                <p className="text-xs font-mono text-slate-500">{selectedUserDetail.email}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
-                    {selectedUserDetail.role.toUpperCase()}
-                  </span>
-                  <span className="text-[11px] text-slate-400">
-                    Joined {new Date(selectedUserDetail.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
               </div>
-            </div>
 
-            {/* WhatsApp Contact Box */}
-            <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 flex items-center justify-between">
-              <div>
-                <span className="text-[11px] font-bold text-emerald-800 uppercase block">WhatsApp Contact</span>
-                <span className="text-xs font-mono font-bold text-slate-900 mt-0.5 block">
-                  {selectedUserDetail.whatsappNumber || selectedUserDetail.phoneNumber || 'Not provided'}
-                </span>
-              </div>
-              {(selectedUserDetail.whatsappNumber || selectedUserDetail.phoneNumber) && (
-                <a
-                  href={`https://wa.me/${(selectedUserDetail.whatsappNumber || selectedUserDetail.phoneNumber || '').replace(/[^\d]/g, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1 shadow-sm"
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingAdSlot(null)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
                 >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span>Chat on WhatsApp</span>
-                </a>
-              )}
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm"
+                >
+                  Save Ad Slot
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: PAYOUT APPROVE WITH TXID */}
+      {payoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4">
+            <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              <span>Confirm & Mark Withdrawal as Paid</span>
+            </h4>
+            <p className="text-xs text-slate-500">
+              Enter the confirmed on-chain transaction hash (TXID) from TronScan or Etherscan.
+            </p>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Blockchain Transaction Hash (TXID)</label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. 7f4a8b92c10938..."
+                value={payoutModal.txHash}
+                onChange={e => setPayoutModal({ ...payoutModal, txHash: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 font-mono"
+              />
             </div>
 
-            {/* Stats Breakdown */}
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <span className="text-slate-400 text-[10px] font-semibold uppercase block">Available Balance</span>
-                <span className="font-extrabold text-emerald-600 text-base font-mono">
-                  ${(selectedUserDetail.balances?.availableCents / 100 || 0).toFixed(2)} USDT
-                </span>
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <span className="text-slate-400 text-[10px] font-semibold uppercase block">Total Earned</span>
-                <span className="font-bold text-slate-900 text-sm font-mono">
-                  ${(selectedUserDetail.balances?.totalEarnedCents / 100 || 0).toFixed(2)} USDT
-                </span>
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <span className="text-slate-400 text-[10px] font-semibold uppercase block">Total Withdrawn</span>
-                <span className="font-bold text-slate-900 text-sm font-mono">
-                  ${(selectedUserDetail.balances?.totalWithdrawnCents / 100 || 0).toFixed(2)} USDT
-                </span>
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <span className="text-slate-400 text-[10px] font-semibold uppercase block">Surveys Completed</span>
-                <span className="font-bold text-slate-900 text-sm">
-                  {selectedUserDetail.completedSurveysCount || 0}
-                </span>
-              </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Notes (Optional)</label>
+              <input
+                type="text"
+                value={payoutModal.notes}
+                onChange={e => setPayoutModal({ ...payoutModal, notes: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200"
+              />
             </div>
 
-            {/* Opaque ID */}
-            <div className="p-3 rounded-xl bg-slate-900 text-slate-200 text-xs font-mono space-y-1">
-              <span className="text-slate-400 text-[10px] uppercase font-bold block">Anonymous CPX Survey Opaque ID:</span>
-              <span className="text-emerald-400 select-all block">{selectedUserDetail.externalOpaqueId}</span>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setPayoutModal(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleApprovePaid}
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-sm"
+              >
+                Confirm Paid
+              </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: REJECT WITHDRAWAL WITH REFUND */}
+      {rejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4">
+            <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-rose-600" />
+              <span>Reject Withdrawal & Refund Funds</span>
+            </h4>
+            <p className="text-xs text-slate-500">
+              The reserved withdrawal funds will be automatically unreserved and restored to the worker's confirmed balance.
+            </p>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Rejection Reason</label>
+              <textarea
+                rows={3}
+                required
+                value={rejectModal.reason}
+                onChange={e => setRejectModal({ ...rejectModal, reason: e.target.value })}
+                className="w-full p-3 text-xs rounded-xl border border-slate-200"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setRejectModal(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRejectWithdrawal}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold shadow-sm"
+              >
+                Reject & Refund
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ADJUST USER BALANCE */}
+      {balanceModalUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4">
+            <h4 className="font-bold text-slate-900 text-sm">
+              Adjust Balance for: {balanceModalUser.email}
+            </h4>
+
+            <form onSubmit={handleAdjustUserBalance} className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBalanceAdjType('credit')}
+                  className={`py-2 rounded-xl text-xs font-bold border transition ${
+                    balanceAdjType === 'credit'
+                      ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
+                      : 'bg-white border-slate-200 text-slate-600'
+                  }`}
+                >
+                  + Add Credit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBalanceAdjType('debit')}
+                  className={`py-2 rounded-xl text-xs font-bold border transition ${
+                    balanceAdjType === 'debit'
+                      ? 'bg-rose-50 border-rose-400 text-rose-800'
+                      : 'bg-white border-slate-200 text-slate-600'
+                  }`}
+                >
+                  - Deduct Debit
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Amount (Cents: 100 = $1.00 = 10,000 Pts)</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={balanceAdjAmount}
+                  onChange={e => setBalanceAdjAmount(Number(e.target.value))}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 font-mono font-bold"
+                />
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  Value: ${(balanceAdjAmount / 100).toFixed(2)} USDT ({balanceAdjAmount * 100} Points)
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Reason / Description</label>
+                <input
+                  type="text"
+                  required
+                  value={balanceAdjReason}
+                  onChange={e => setBalanceAdjReason(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setBalanceModalUser(null)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm"
+                >
+                  Apply Adjustment
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: IMAGE PREVIEW */}
+      {previewImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white p-3 rounded-2xl max-w-3xl max-h-[90vh] overflow-auto relative">
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute right-3 top-3 p-1.5 bg-slate-900 text-white rounded-full hover:bg-slate-700 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img src={previewImage} alt="Submitted Proof" className="max-w-full rounded-xl" />
           </div>
         </div>
       )}
     </div>
   );
-};
+}

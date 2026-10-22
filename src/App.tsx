@@ -4,13 +4,30 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { User, UserBalances, UsdtQuote, Survey, Withdrawal, LedgerEntry, CpxConfigStatus } from './types';
+import {
+  User,
+  UserBalances,
+  UsdtQuote,
+  Survey,
+  Withdrawal,
+  LedgerEntry,
+  CpxConfigStatus,
+  TaskCampaign,
+  TaskSubmission,
+  OfferwallItem,
+  AdSettings,
+  AdvertiserOverview,
+  AdvertiserDeposit
+} from './types';
 import { UsdtNetwork } from './utils/usdt';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { LandingPage } from './components/LandingPage';
 import { AuthModal } from './components/AuthModal';
 import { UserDashboard } from './components/UserDashboard';
+import { TasksView } from './components/TasksView';
+import { OfferwallsView } from './components/OfferwallsView';
+import { AdvertiserView } from './components/AdvertiserView';
 import { SurveysView } from './components/SurveysView';
 import { WithdrawalView } from './components/WithdrawalView';
 import { TransactionsView } from './components/TransactionsView';
@@ -18,8 +35,27 @@ import { SettingsView } from './components/SettingsView';
 import { AdminView } from './components/AdminView';
 import { LegalModal } from './components/LegalModal';
 import { PhoneOnboardingModal } from './components/PhoneOnboardingModal';
-import { auth, logOutFromFirebase, resendVerification } from './firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { AdBanners } from './components/AdBanners';
+import { signOutWithSupabase, resendSupabaseVerification, onSupabaseAuthStateChange, syncSupabaseUserWithBackend } from './supabase';
+
+const getInitialTab = (): string => {
+  if (typeof window === 'undefined') return 'landing';
+  const hash = window.location.hash.replace(/^#/, '').toLowerCase();
+  const path = window.location.pathname.replace(/^\//, '').toLowerCase();
+  const searchParams = new URLSearchParams(window.location.search);
+  const tabParam = searchParams.get('tab')?.toLowerCase();
+
+  const candidate = hash || tabParam || path;
+  const validTabs = [
+    'admin', 'tasks', 'surveys', 'withdraw', 'transactions',
+    'settings', 'advertiser', 'advertiser-create', 'advertiser-proofs',
+    'advertiser-billing', 'dashboard'
+  ];
+  if (validTabs.includes(candidate)) {
+    return candidate;
+  }
+  return 'landing';
+};
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -27,14 +63,29 @@ export default function App() {
   const [usdtQuote, setUsdtQuote] = useState<UsdtQuote | null>(null);
   const [cpxStatus, setCpxStatus] = useState<CpxConfigStatus | null>(null);
 
-  // Tab navigation: 'landing' (if unauthed), 'dashboard', 'surveys', 'withdraw', 'transactions', 'settings', 'admin'
-  const [currentTab, setCurrentTab] = useState<string>('landing');
+  // Tab navigation: 'landing', 'dashboard', 'tasks', 'surveys', 'withdraw', 'transactions', 'settings', 'admin',
+  // Advertiser tabs: 'advertiser', 'advertiser-create', 'advertiser-proofs', 'advertiser-billing'
+  const [currentTab, setCurrentTab] = useState<string>(getInitialTab);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [phoneModalOpen, setPhoneModalOpen] = useState(false);
   const [authInitialMode, setAuthInitialMode] = useState<'signin' | 'signup'>('signin');
+  const [authRoleChoice, setAuthRoleChoice] = useState<'user' | 'advertiser'>('user');
   const [legalModalPage, setLegalModalPage] = useState<string | null>(null);
 
   // Data states
+  const [tasks, setTasks] = useState<TaskCampaign[]>([]);
+  const [tasksLoading, setTasksLoading] = useState(false);
+  const [workerSubmissions, setWorkerSubmissions] = useState<TaskSubmission[]>([]);
+  const [offerwalls, setOfferwalls] = useState<OfferwallItem[]>([]);
+  const [adSettings, setAdSettings] = useState<AdSettings | null>(null);
+
+  // Advertiser specific data
+  const [advertiserOverview, setAdvertiserOverview] = useState<AdvertiserOverview | null>(null);
+  const [advertiserCampaigns, setAdvertiserCampaigns] = useState<TaskCampaign[]>([]);
+  const [advertiserSubmissions, setAdvertiserSubmissions] = useState<TaskSubmission[]>([]);
+  const [advertiserDeposits, setAdvertiserDeposits] = useState<AdvertiserDeposit[]>([]);
+
+  // Surveys, Ledger & Withdrawals
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [surveysLoading, setSurveysLoading] = useState(false);
   const [surveysError, setSurveysError] = useState<string | null>(null);
@@ -44,33 +95,25 @@ export default function App() {
   // Token helper
   const getAuthToken = () => localStorage.getItem('rr_auth_token');
 
-  // Fetch live USDT exchange rate / peg quote
+  // Fetch USDT price quote
   const fetchUsdtQuote = useCallback(async () => {
     try {
       const res = await fetch('/api/usdt/price');
-      if (res.ok) {
-        const quote = await res.json();
-        setUsdtQuote(quote);
-      }
+      if (res.ok) setUsdtQuote(await res.json());
     } catch (e) {
-      console.warn('Could not fetch USDT price quote:', e);
+      console.warn('Could not fetch USDT quote:', e);
     }
   }, []);
 
-  // Fetch CPX publisher status
-  const fetchCpxStatus = useCallback(async () => {
+  // Fetch public ad configurations
+  const fetchPublicAds = useCallback(async () => {
     try {
-      const res = await fetch('/api/cpx/status');
-      if (res.ok) {
-        const status = await res.json();
-        setCpxStatus(status);
-      }
-    } catch (e) {
-      console.warn('Could not fetch CPX status:', e);
-    }
+      const res = await fetch('/api/public/ads');
+      if (res.ok) setAdSettings(await res.json());
+    } catch {}
   }, []);
 
-  // Fetch user data (profile & balance)
+  // Fetch user account & balances
   const fetchUserData = useCallback(async (token?: string) => {
     const activeToken = token || getAuthToken();
     if (!activeToken) return;
@@ -93,7 +136,68 @@ export default function App() {
     }
   }, []);
 
-  // Fetch surveys from CPX API
+  // Fetch micro-tasks for worker
+  const fetchTasks = useCallback(async () => {
+    const token = getAuthToken();
+    if (!token) return;
+    setTasksLoading(true);
+    try {
+      const [tRes, sRes] = await Promise.all([
+        fetch('/api/tasks', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/tasks/my-submissions', { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      if (tRes.ok) {
+        const data = await tRes.json();
+        setTasks(data.tasks || []);
+      }
+      if (sRes.ok) {
+        const data = await sRes.json();
+        setWorkerSubmissions(data.submissions || []);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch tasks:', err);
+    } finally {
+      setTasksLoading(false);
+    }
+  }, []);
+
+  // Fetch multi-offerwalls
+  const fetchOfferwalls = useCallback(async () => {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      const res = await fetch('/api/offerwalls', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setOfferwalls(data.offerwalls || []);
+      }
+    } catch {}
+  }, []);
+
+  // Fetch advertiser panel data
+  const fetchAdvertiserData = useCallback(async () => {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      const [ovRes, cRes, sRes, bRes] = await Promise.all([
+        fetch('/api/advertiser/overview', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/advertiser/campaigns', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/advertiser/submissions', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/advertiser/billing', { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      if (ovRes.ok) setAdvertiserOverview(await ovRes.json());
+      if (cRes.ok) setAdvertiserCampaigns((await cRes.json()).campaigns || []);
+      if (sRes.ok) setAdvertiserSubmissions((await sRes.json()).submissions || []);
+      if (bRes.ok) {
+        const bData = await bRes.json();
+        setAdvertiserDeposits(bData.deposits || []);
+      }
+    } catch {}
+  }, []);
+
+  // Fetch CPX surveys
   const fetchSurveys = useCallback(async () => {
     const token = getAuthToken();
     if (!token) return;
@@ -109,11 +213,9 @@ export default function App() {
         setSurveysError(data.error || 'Failed to fetch available surveys.');
       } else {
         setSurveys(data.surveys || []);
-        if (data.usdtQuote) {
-          setUsdtQuote(data.usdtQuote);
-        }
+        if (data.usdtQuote) setUsdtQuote(data.usdtQuote);
       }
-    } catch (err: unknown) {
+    } catch {
       setSurveysError('Connection to survey server failed.');
     } finally {
       setSurveysLoading(false);
@@ -141,57 +243,45 @@ export default function App() {
         const wData = await withRes.json();
         setWithdrawals(wData.withdrawals || []);
       }
-    } catch (e) {
-      console.warn('Failed to fetch ledger data:', e);
-    }
+    } catch {}
   }, []);
 
   // Refresh all user data
   const handleRefreshAll = useCallback(() => {
     fetchUserData();
+    fetchTasks();
+    fetchOfferwalls();
     fetchSurveys();
     fetchLedgerAndWithdrawals();
+    fetchAdvertiserData();
     fetchUsdtQuote();
-    fetchCpxStatus();
-  }, [fetchUserData, fetchSurveys, fetchLedgerAndWithdrawals, fetchUsdtQuote, fetchCpxStatus]);
+    fetchPublicAds();
+  }, [fetchUserData, fetchTasks, fetchOfferwalls, fetchSurveys, fetchLedgerAndWithdrawals, fetchAdvertiserData, fetchUsdtQuote, fetchPublicAds]);
 
-  // Listen to Firebase Auth state for real persistent account status
+  // Initial load & Auth Listener
   useEffect(() => {
     fetchUsdtQuote();
-    fetchCpxStatus();
+    fetchPublicAds();
 
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-      if (fbUser) {
+    const authSub = onSupabaseAuthStateChange(async (_event, session) => {
+      if (session?.user) {
         try {
-          const idToken = await fbUser.getIdToken();
-          const res = await fetch('/api/auth/firebase-sync', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              idToken,
-              uid: fbUser.uid,
-              email: fbUser.email,
-              displayName: fbUser.displayName || fbUser.email?.split('@')[0],
-              emailVerified: fbUser.emailVerified,
-              photoURL: fbUser.photoURL || undefined,
-              phoneNumber: fbUser.phoneNumber || undefined,
-              provider: fbUser.providerData?.[0]?.providerId || 'google.com'
-            })
-          });
+          const data = await syncSupabaseUserWithBackend(
+            session.user,
+            session.access_token,
+            authRoleChoice
+          );
 
-          if (res.ok) {
-            const data = await res.json();
-            localStorage.setItem('rr_auth_token', data.token);
-            setUser(data.user);
-            setBalances(data.balances);
-            setCurrentTab((prev) => (prev === 'landing' ? 'dashboard' : prev));
+          localStorage.setItem('rr_auth_token', data.token);
+          setUser(data.user);
+          setBalances(data.balances);
+          setCurrentTab((prev) => (prev === 'landing' ? (data.user.role === 'advertiser' ? 'advertiser' : 'dashboard') : prev));
 
-            if (data.user && !data.user.whatsappNumber && !data.user.phoneNumber && !data.user.hasPromptedPhone && !sessionStorage.getItem('phone_prompt_dismissed')) {
-              setPhoneModalOpen(true);
-            }
+          if (data.user && !data.user.whatsappNumber && !data.user.phoneNumber && !data.user.hasPromptedPhone && !sessionStorage.getItem('phone_prompt_dismissed')) {
+            setPhoneModalOpen(true);
           }
         } catch (e) {
-          console.warn('Firebase state sync warning:', e);
+          console.warn('Supabase state sync warning:', e);
         }
       } else {
         const token = getAuthToken();
@@ -203,46 +293,223 @@ export default function App() {
       }
     });
 
-    return () => unsubscribe();
-  }, [fetchUsdtQuote, fetchCpxStatus, fetchUserData]);
+    return () => {
+      if (authSub && (authSub as any).data?.subscription) {
+        (authSub as any).data.subscription.unsubscribe();
+      }
+    };
+  }, [fetchUsdtQuote, fetchPublicAds, fetchUserData, authRoleChoice]);
 
-  // When tab changes, load specific tab data
+  // Tab change triggers
   useEffect(() => {
     if (user) {
-      if (currentTab === 'surveys') fetchSurveys();
+      if (currentTab === 'tasks') fetchTasks();
+      if (currentTab === 'surveys') {
+        fetchOfferwalls();
+        fetchSurveys();
+      }
+      if (currentTab.startsWith('advertiser')) fetchAdvertiserData();
       if (['dashboard', 'withdraw', 'transactions', 'earnings'].includes(currentTab)) {
         fetchLedgerAndWithdrawals();
       }
     }
-  }, [currentTab, user, fetchSurveys, fetchLedgerAndWithdrawals]);
+  }, [currentTab, user, fetchTasks, fetchOfferwalls, fetchSurveys, fetchAdvertiserData, fetchLedgerAndWithdrawals]);
 
-  // Handle Authentication Success
-  const handleAuthSuccess = (token: string, newUser: User, newBalances?: UserBalances) => {
-    localStorage.setItem('rr_auth_token', token);
-    setUser(newUser);
-    if (newBalances) setBalances(newBalances);
-    setCurrentTab('dashboard');
-    handleRefreshAll();
+  // Synchronize URL hash with current tab for direct deep-linking & Vercel deployment support
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (currentTab === 'landing') {
+      if (window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    } else {
+      window.history.replaceState(null, '', `#${currentTab}`);
+    }
+  }, [currentTab]);
+
+  // Listen to hash changes (e.g. user navigates to #admin or clicks browser back/forward)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleHash = () => {
+      const hash = window.location.hash.replace(/^#/, '').toLowerCase();
+      const validTabs = [
+        'admin', 'tasks', 'surveys', 'withdraw', 'transactions',
+        'settings', 'advertiser', 'advertiser-create', 'advertiser-proofs',
+        'advertiser-billing', 'dashboard'
+      ];
+      if (hash && validTabs.includes(hash)) {
+        setCurrentTab(hash);
+      }
+    };
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
+  // Role Switcher Handler (Worker <-> Advertiser)
+  const handleSwitchRole = async () => {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      const res = await fetch('/api/user/switch-role', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+        if (data.role === 'advertiser') {
+          setCurrentTab('advertiser');
+          fetchAdvertiserData();
+        } else {
+          setCurrentTab('dashboard');
+          fetchTasks();
+        }
+      }
+    } catch {}
+  };
+
+  // Worker submits proof
+  const handleSubmitTaskProof = async (taskId: string, proof: any) => {
+    const token = getAuthToken();
+    if (!token) return { success: false, error: 'Authentication required' };
+
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(proof)
+      });
+      const data = await res.json();
+      if (!res.ok) return { success: false, error: data.error };
+      fetchTasks();
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Network error submitting proof.' };
+    }
+  };
+
+  // Advertiser creates campaign
+  const handleCreateCampaign = async (campaignData: any) => {
+    const token = getAuthToken();
+    if (!token) return { success: false, error: 'Authentication required' };
+
+    try {
+      const res = await fetch('/api/advertiser/campaigns', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(campaignData)
+      });
+      const data = await res.json();
+      if (!res.ok) return { success: false, error: data.error };
+      fetchAdvertiserData();
+      fetchUserData();
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Failed to create campaign' };
+    }
+  };
+
+  // Advertiser updates campaign status (pause/resume)
+  const handleUpdateCampaignStatus = async (taskId: string, status: string) => {
+    const token = getAuthToken();
+    if (!token) return { success: false, error: 'Authentication required' };
+
+    try {
+      const res = await fetch(`/api/advertiser/campaigns/${taskId}/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status })
+      });
+      const data = await res.json();
+      if (!res.ok) return { success: false, error: data.error };
+      fetchAdvertiserData();
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Failed to update campaign' };
+    }
+  };
+
+  // Advertiser reviews worker proof
+  const handleReviewSubmission = async (submissionId: string, action: 'approved' | 'rejected', reason?: string) => {
+    const token = getAuthToken();
+    if (!token) return { success: false, error: 'Authentication required' };
+
+    try {
+      const res = await fetch(`/api/advertiser/submissions/${submissionId}/review`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ action, reason })
+      });
+      const data = await res.json();
+      if (!res.ok) return { success: false, error: data.error };
+      fetchAdvertiserData();
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Failed to review submission' };
+    }
+  };
+
+  // Advertiser deposits funds
+  const handleDepositFunds = async (amountUsd: number, method: string) => {
+    const token = getAuthToken();
+    if (!token) return { success: false, error: 'Authentication required' };
+
+    try {
+      const res = await fetch('/api/advertiser/deposits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ amountUsd, method })
+      });
+      const data = await res.json();
+      if (!res.ok) return { success: false, error: data.error };
+      fetchAdvertiserData();
+      fetchUserData();
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Failed to deposit funds' };
+    }
   };
 
   // Sign out
   const handleSignOut = async () => {
     try {
-      await logOutFromFirebase();
-    } catch {
-      // Ignored
-    }
+      await signOutWithSupabase();
+    } catch {}
     localStorage.removeItem('rr_auth_token');
     setUser(null);
     setBalances(null);
     setCurrentTab('landing');
   };
 
+  // Auth Success
+  const handleAuthSuccess = (token: string, newUser: User, newBalances?: UserBalances) => {
+    localStorage.setItem('rr_auth_token', token);
+    setUser(newUser);
+    if (newBalances) setBalances(newBalances);
+    setCurrentTab(newUser.role === 'advertiser' ? 'advertiser' : 'dashboard');
+    handleRefreshAll();
+  };
+
   // Verify email trigger
   const handleVerifyEmail = async () => {
     const token = getAuthToken();
     try {
-      await resendVerification();
+      if (user?.email) await resendSupabaseVerification(user.email);
       if (token) {
         await fetch('/api/auth/verify-email', {
           method: 'POST',
@@ -250,63 +517,7 @@ export default function App() {
         });
       }
       handleRefreshAll();
-    } catch (e) {
-      console.warn('Verification dispatch failed:', e);
-    }
-  };
-
-  // Start Survey Flow
-  const handleStartSurvey = async (survey: Survey) => {
-    const token = getAuthToken();
-    if (!token) {
-      setAuthInitialMode('signin');
-      setAuthModalOpen(true);
-      return;
-    }
-
-    let targetUrl = survey.directUrl;
-
-    try {
-      const res = await fetch('/api/surveys/start', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          surveyId: survey.id,
-          loi: survey.loiMinutes,
-          cpi: survey.cpi,
-          directUrl: survey.directUrl
-        })
-      });
-
-      if (res.ok) {
-        const text = await res.text();
-        if (text) {
-          try {
-            const data = JSON.parse(text);
-            if (data.redirectUrl || data.url) {
-              targetUrl = data.redirectUrl || data.url;
-            }
-          } catch {
-            // Use existing valid directUrl
-          }
-        }
-      }
-    } catch (err) {
-      console.warn('Backend survey start ping failed, falling back to direct launch URL:', err);
-    }
-
-    if (targetUrl) {
-      const a = document.createElement('a');
-      a.href = targetUrl;
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
+    } catch {}
   };
 
   // Submit Withdrawal Request
@@ -328,11 +539,7 @@ export default function App() {
     });
 
     const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Withdrawal request failed.');
-    }
-
-    // Refresh balances and withdrawals
+    if (!res.ok) throw new Error(data.error || 'Withdrawal request failed.');
     handleRefreshAll();
   };
 
@@ -350,20 +557,17 @@ export default function App() {
         body: JSON.stringify({ currentPassword: currentPass, newPassword: newPass })
       });
       const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || 'Password update failed' };
-      }
+      if (!res.ok) return { success: false, error: data.error || 'Password update failed' };
       return { success: true };
     } catch {
       return { success: false, error: 'Network communication failed' };
     }
   };
 
-  // WhatsApp / Phone onboarding save handler
+  // WhatsApp / Phone onboarding
   const handleSavePhone = async (whatsappNumber: string, countryCode: string) => {
     const token = getAuthToken();
     if (!token) return;
-
     try {
       const res = await fetch('/api/user/phone', {
         method: 'POST',
@@ -373,16 +577,11 @@ export default function App() {
         },
         body: JSON.stringify({ whatsappNumber, countryCode })
       });
-
       if (res.ok) {
         const data = await res.json();
-        if (data.user) {
-          setUser(data.user);
-        }
+        if (data.user) setUser(data.user);
       }
-    } catch (e) {
-      console.warn('Failed to save phone number:', e);
-    } finally {
+    } catch {} finally {
       sessionStorage.setItem('phone_prompt_dismissed', 'true');
       setPhoneModalOpen(false);
     }
@@ -403,6 +602,7 @@ export default function App() {
         }}
         onSignOut={handleSignOut}
         onOpenLegal={(page) => setLegalModalPage(page)}
+        onSwitchRole={handleSwitchRole}
       />
 
       {/* Main Content Area */}
@@ -415,9 +615,15 @@ export default function App() {
             }}
             onOpenLegal={(page) => setLegalModalPage(page)}
             usdtQuote={usdtQuote}
+            onSelectRoleSignup={(role) => {
+              setAuthRoleChoice(role);
+              setAuthInitialMode('signup');
+              setAuthModalOpen(true);
+            }}
           />
         )}
 
+        {/* Worker Dashboard */}
         {currentTab === 'dashboard' && user && (
           <UserDashboard
             user={user}
@@ -428,23 +634,49 @@ export default function App() {
             recentWithdrawals={withdrawals.slice(0, 3)}
             recentLedger={ledgerEntries.slice(0, 5)}
             onNavigateTab={setCurrentTab}
-            onStartSurvey={handleStartSurvey}
+            onStartSurvey={() => setCurrentTab('surveys')}
             onVerifyEmail={handleVerifyEmail}
           />
         )}
 
-        {currentTab === 'surveys' && user && (
-          <SurveysView
-            surveys={surveys}
-            loading={surveysLoading}
-            error={surveysError}
-            cpxStatus={cpxStatus}
+        {/* Micro-Tasks Marketplace (JobsWorkTech Marketplace) */}
+        {currentTab === 'tasks' && user && (
+          <TasksView
+            tasks={tasks}
+            submissions={workerSubmissions}
+            loading={tasksLoading}
+            onRefresh={fetchTasks}
+            onSubmitProof={handleSubmitTaskProof}
             usdtQuote={usdtQuote}
-            onRefresh={fetchSurveys}
-            onStartSurvey={handleStartSurvey}
           />
         )}
 
+        {/* Multi-Offerwalls (CPX, Aoyco, AdvertsReward) */}
+        {currentTab === 'surveys' && user && (
+          <OfferwallsView
+            offerwalls={offerwalls}
+            onRefresh={fetchOfferwalls}
+            usdtQuote={usdtQuote}
+          />
+        )}
+
+        {/* Advertiser Portal (Campaigns, Create Task, Review Proofs, Billing) */}
+        {currentTab.startsWith('advertiser') && user && (
+          <AdvertiserView
+            user={user}
+            overview={advertiserOverview}
+            campaigns={advertiserCampaigns}
+            submissions={advertiserSubmissions}
+            deposits={advertiserDeposits}
+            onRefresh={fetchAdvertiserData}
+            onCreateCampaign={handleCreateCampaign}
+            onUpdateCampaignStatus={handleUpdateCampaignStatus}
+            onReviewSubmission={handleReviewSubmission}
+            onDepositFunds={handleDepositFunds}
+          />
+        )}
+
+        {/* Withdrawal Page */}
         {currentTab === 'withdraw' && user && (
           <WithdrawalView
             user={user}
@@ -464,6 +696,7 @@ export default function App() {
           />
         )}
 
+        {/* Transactions / History */}
         {currentTab === 'transactions' && user && (
           <TransactionsView
             entries={ledgerEntries}
@@ -472,6 +705,7 @@ export default function App() {
           />
         )}
 
+        {/* Settings */}
         {currentTab === 'settings' && user && (
           <SettingsView
             user={user}
@@ -480,18 +714,28 @@ export default function App() {
           />
         )}
 
-        {currentTab === 'admin' && user?.role === 'admin' && (
+        {/* Admin View */}
+        {currentTab === 'admin' && (
           <AdminView
-            adminUser={user}
+            adminUser={user?.role === 'admin' ? user : undefined}
             cpxStatus={cpxStatus}
             onDataChanged={handleRefreshAll}
+            onAdminLoginSuccess={(data) => {
+              localStorage.setItem('rr_auth_token', data.token);
+              setUser(data.user);
+              setBalances(data.balances);
+            }}
           />
         )}
       </main>
 
+      {/* Sandboxed Sticky Banner & Rail Ads */}
+      <AdBanners adSettings={adSettings} />
+
       {/* Footer */}
       <Footer
         onOpenLegal={(page) => setLegalModalPage(page)}
+        onSelectTab={setCurrentTab}
       />
 
       {/* Auth Modal */}
@@ -511,7 +755,7 @@ export default function App() {
         />
       )}
 
-      {/* Phone & WhatsApp Onboarding Modal */}
+      {/* WhatsApp Onboarding Modal */}
       {user && (
         <PhoneOnboardingModal
           isOpen={phoneModalOpen}

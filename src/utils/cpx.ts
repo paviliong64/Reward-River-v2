@@ -132,7 +132,8 @@ export function normalizeCpxSurveyList(
   rawData: unknown,
   appId: string,
   extUserId: string,
-  hashKey?: string
+  hashKey?: string,
+  userSharePercent: number = 40
 ): NormalizedSurvey[] {
   if (!rawData || typeof rawData !== 'object') {
     return [];
@@ -154,9 +155,10 @@ export function normalizeCpxSurveyList(
 
     const loiMinutes = Math.max(1, Math.min(60, Number(raw.loi) || 10));
     
-    // Parse payout: CPX returns payout in decimal (e.g. 0.85 USD or publisher currency)
+    // Parse payout: CPX returns gross payout. Apply user's 40% share (Reward River retains 60%)
     const rawPayout = Number(raw.payout || raw.cpi) || 0;
-    const rewardCents = Math.max(10, Math.round(rawPayout * 100)); // integer cents
+    const grossCents = Math.round(rawPayout * 100);
+    const rewardCents = Math.max(10, Math.round((grossCents * userSharePercent) / 100));
     const rewardUsdFormatted = `$${(rewardCents / 100).toFixed(2)}`;
 
     const cpi = Number(raw.cpi) || 0;

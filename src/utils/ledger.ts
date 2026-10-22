@@ -14,6 +14,7 @@ export interface LedgerEntry {
   processedAt?: string;
   reversalRef?: string;
   description?: string;
+  cpxOfferId?: string;
 }
 
 export interface WithdrawalRecord {

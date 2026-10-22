@@ -4,9 +4,10 @@ import { Shield, HelpCircle, FileText, Lock, RefreshCw } from 'lucide-react';
 
 interface FooterProps {
   onOpenLegal: (page: string) => void;
+  onSelectTab?: (tab: string) => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onOpenLegal }) => {
+export const Footer: React.FC<FooterProps> = ({ onOpenLegal, onSelectTab }) => {
   return (
     <footer className="bg-slate-900 text-slate-300 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -58,6 +59,15 @@ export const Footer: React.FC<FooterProps> = ({ onOpenLegal }) => {
                   Support & Contact
                 </button>
               </li>
+              <li>
+                <button
+                  onClick={() => onSelectTab ? onSelectTab('admin') : (window.location.hash = '#admin')}
+                  className="hover:text-cyan-400 transition-colors flex items-center gap-1.5 text-slate-400"
+                >
+                  <Shield className="w-3.5 h-3.5 text-cyan-400" />
+                  Command Center (Admin)
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -106,7 +116,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenLegal }) => {
             <div className="flex items-center gap-1.5 flex-wrap">
               <span>© {new Date().getFullYear()} Reward River. All rights reserved.</span>
               <span className="text-slate-600">•</span>
-              <span>Made & Supported by <a href="https://www.injazify.com" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 font-medium hover:underline transition-colors">www.injazify.com</a></span>
+              <span>Architected & Built with precision by <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 font-bold hover:underline transition-colors">Injazify Studios by Rayan Mirza</a> (<a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white hover:underline">injazify.com</a>)</span>
             </div>
             <span className="text-slate-500">Earn Rewards. Flow Forward.</span>
           </div>

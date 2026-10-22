@@ -11,6 +11,7 @@ import {
   buildCpxSurveyUrl,
   NormalizedSurvey
 } from '../src/utils/cpx';
+import { dbStore } from './db';
 
 export interface CpxConfigStatus {
   isConfigured: boolean;
@@ -38,16 +39,20 @@ export interface UserProfilingInfo {
 }
 
 export class CpxResearchService {
+  private get cpxProvider() {
+    return dbStore.getProviderById('cpx');
+  }
+
   private get appId(): string {
-    return process.env.CPX_APP_ID || '37479';
+    return this.cpxProvider?.appId || process.env.CPX_APP_ID || '37479';
   }
 
   private get hashKey(): string {
-    return process.env.CPX_HASH_KEY || 'yTrC9mntJwV1PSRJ5WdMbwMSel6qMheY';
+    return this.cpxProvider?.hashKey || this.cpxProvider?.secretKey || process.env.CPX_HASH_KEY || 'yTrC9mntJwV1PSRJ5WdMbwMSel6qMheY';
   }
 
   private get postbackSecret(): string {
-    return process.env.CPX_POSTBACK_SECRET || 'yTrC9mntJwV1PSRJ5WdMbwMSel6qMheY';
+    return this.cpxProvider?.secretKey || process.env.CPX_POSTBACK_SECRET || 'yTrC9mntJwV1PSRJ5WdMbwMSel6qMheY';
   }
 
   /**
@@ -146,7 +151,8 @@ export class CpxResearchService {
 
       const json = await response.json();
       if (json.status === 'success') {
-        const normalized = normalizeCpxSurveyList(json, this.appId, externalUserId, this.hashKey);
+        const userShare = this.cpxProvider?.userSharePercent ?? dbStore.getSettings().defaultUserSharePercent ?? 40;
+        const normalized = normalizeCpxSurveyList(json, this.appId, externalUserId, this.hashKey, userShare);
         return {
           success: true,
           surveys: normalized,

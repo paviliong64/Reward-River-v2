@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { User, UserBalances } from '../types';
 import { X, Lock, Mail, User as UserIcon, ShieldAlert, CheckCircle, ArrowRight } from 'lucide-react';
 import {
-  registerWithFirebase,
-  signInWithFirebase,
-  signInWithGooglePopup,
-  resetFirebasePassword
-} from '../firebase';
+  signUpWithSupabase,
+  signInWithSupabase,
+  signInWithSupabaseGoogle,
+  resetSupabasePassword
+} from '../supabase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -24,6 +24,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onOpenLegal
 }) => {
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>(initialMode);
+  const [selectedRole, setSelectedRole] = useState<'user' | 'advertiser'>('user');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -35,57 +36,50 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   if (!isOpen) return null;
 
-  const parseFirebaseError = (err: unknown): string => {
+  const parseSupabaseError = (err: unknown): string => {
     const message = err instanceof Error ? err.message : String(err);
-    if (message.includes('auth/email-already-in-use')) {
+    if (message.includes('User already registered') || message.includes('already in use')) {
       return 'An account with this email address already exists. Please sign in instead.';
     }
-    if (message.includes('auth/invalid-credential') || message.includes('auth/wrong-password') || message.includes('auth/user-not-found')) {
+    if (message.includes('Invalid login credentials') || message.includes('invalid-credential') || message.includes('user not found')) {
       return 'Invalid email or password. Please check your credentials.';
     }
-    if (message.includes('auth/weak-password')) {
-      return 'Password is too weak. Please use at least 8 characters.';
+    if (message.includes('Password should be at least')) {
+      return 'Password must be at least 6 characters.';
     }
-    if (message.includes('auth/popup-closed-by-user')) {
-      return 'The Google sign-in window was closed before completing.';
-    }
-    if (message.includes('auth/popup-blocked')) {
-      return 'Popup was blocked by your browser. Please allow popups for this site.';
-    }
-    if (message.includes('auth/invalid-email')) {
+    if (message.includes('invalid email')) {
       return 'Please enter a valid email address.';
     }
-    if (message.includes('Missing or insufficient permissions') || message.includes('permission-denied')) {
-      return 'Access could not be verified. Please refresh and try again.';
-    }
-    if (message.includes('network-request-failed')) {
-      return 'Network connection error. Please check your internet connection.';
-    }
-    if (message.startsWith('{') && message.includes('error')) {
-      return 'Authentication could not complete. Please try again.';
-    }
     return message
-      .replace(/Firebase:\s*/gi, '')
-      .replace(/Firestore:\s*/gi, '')
-      .replace(/\(auth\/[^)]+\)\.?/gi, '')
+      .replace(/Supabase:\s*/gi, '')
+      .replace(/AuthApiError:\s*/gi, '')
       .trim() || 'Authentication failed. Please try again.';
   };
 
-  const syncWithBackend = async (idToken: string, user: User): Promise<UserBalances | undefined> => {
+  const syncWithBackend = async (token: string, user: User, roleChoice: 'user' | 'advertiser'): Promise<UserBalances | undefined> => {
     try {
-      const res = await fetch('/api/auth/firebase-sync', {
+      const res = await fetch('/api/auth/supabase-sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          idToken,
+          token,
+          id: user.id,
           uid: user.id,
           email: user.email,
           displayName: user.displayName,
-          emailVerified: user.emailVerified
+          emailVerified: user.emailVerified,
+          role: roleChoice,
+          provider: 'supabase'
         })
       });
       if (res.ok) {
         const data = await res.json();
+        if (data.token) {
+          localStorage.setItem('rr_auth_token', data.token);
+        }
+        if (data.user?.role) {
+          user.role = data.user.role;
+        }
         return data.balances;
       }
     } catch (e) {
@@ -122,22 +116,91 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     try {
       if (mode === 'signin') {
-        const { user: fbUser, idToken } = await signInWithFirebase(email, password);
-        const balances = await syncWithBackend(idToken, fbUser);
-        onSuccess(idToken, fbUser, balances);
-        onClose();
+        try {
+          const { user: sbUser, session } = await signInWithSupabase(email, password);
+          const effectiveToken = session?.access_token || '';
+          const mappedUser: User = {
+            id: sbUser?.id || `sb_${Date.now()}`,
+            email,
+            displayName: (sbUser?.user_metadata?.displayName as string) || email.split('@')[0],
+            emailVerified: Boolean(sbUser?.email_confirmed_at),
+            role: (sbUser?.user_metadata?.role as 'user' | 'advertiser' | 'admin') || selectedRole,
+            createdAt: sbUser?.created_at || new Date().toISOString()
+          };
+          const balances = await syncWithBackend(effectiveToken, mappedUser, selectedRole);
+          onSuccess(localStorage.getItem('rr_auth_token') || effectiveToken, mappedUser, balances);
+          onClose();
+          return;
+        } catch (sbErr: any) {
+          // Fallback to local authentication
+          try {
+            const res = await fetch('/api/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if (res.ok) {
+              onSuccess(data.token, data.user, data.balances);
+              onClose();
+              return;
+            }
+          } catch {}
+          throw sbErr;
+        }
       } else if (mode === 'signup') {
-        const { user: fbUser, idToken } = await registerWithFirebase(email, password, displayName);
-        const balances = await syncWithBackend(idToken, fbUser);
-        onSuccess(idToken, fbUser, balances);
-        onClose();
+        try {
+          const { user: sbUser, session } = await signUpWithSupabase(email, password, displayName, selectedRole);
+          const effectiveToken = session?.access_token || '';
+          const mappedUser: User = {
+            id: sbUser?.id || `sb_${Date.now()}`,
+            email,
+            displayName: displayName || email.split('@')[0],
+            emailVerified: Boolean(sbUser?.email_confirmed_at),
+            role: selectedRole,
+            createdAt: sbUser?.created_at || new Date().toISOString()
+          };
+          const balances = await syncWithBackend(effectiveToken, mappedUser, selectedRole);
+          onSuccess(localStorage.getItem('rr_auth_token') || effectiveToken, mappedUser, balances);
+          onClose();
+          return;
+        } catch (sbErr: any) {
+          // Fallback to local registration
+          try {
+            const res = await fetch('/api/auth/register', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                email,
+                password,
+                confirmPassword,
+                displayName,
+                acceptTerms: true,
+                role: selectedRole
+              })
+            });
+            const data = await res.json();
+            if (res.ok) {
+              onSuccess(data.token, data.user);
+              onClose();
+              return;
+            } else if (data.error) {
+              throw new Error(data.error);
+            }
+          } catch (localErr: any) {
+            if (localErr.message && !localErr.message.includes('fetch')) {
+              throw localErr;
+            }
+          }
+          throw sbErr;
+        }
       } else if (mode === 'forgot') {
-        await resetFirebasePassword(email);
+        await resetSupabasePassword(email);
         setSuccessMessage('Password reset instructions have been dispatched to your email address.');
         setLoading(false);
       }
     } catch (err: unknown) {
-      setError(parseFirebaseError(err));
+      setError(parseSupabaseError(err));
       setLoading(false);
     }
   };
@@ -146,12 +209,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const { user: fbUser, idToken } = await signInWithGooglePopup();
-      const balances = await syncWithBackend(idToken, fbUser);
-      onSuccess(idToken, fbUser, balances);
-      onClose();
+      await signInWithSupabaseGoogle();
     } catch (err) {
-      setError(parseFirebaseError(err));
+      setError(parseSupabaseError(err));
       setLoading(false);
     }
   };
@@ -199,6 +259,51 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           )}
 
           <form onSubmit={handleSubmit} className="space-y-3.5">
+            {mode === 'signup' && (
+              <div className="mb-2">
+                <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                  I want to use Reward River as:
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRole('user')}
+                    className={`p-2.5 rounded-xl border text-left transition-all ${
+                      selectedRole === 'user'
+                        ? 'border-sky-500 bg-sky-50/80 text-sky-950 ring-2 ring-sky-500/20 shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="font-bold text-xs flex items-center justify-between">
+                      <span>Worker / Earner</span>
+                      {selectedRole === 'user' && <span className="w-2 h-2 rounded-full bg-sky-500"></span>}
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
+                      Complete tasks & earn Points / USDT
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRole('advertiser')}
+                    className={`p-2.5 rounded-xl border text-left transition-all ${
+                      selectedRole === 'advertiser'
+                        ? 'border-indigo-500 bg-indigo-50/80 text-indigo-950 ring-2 ring-indigo-500/20 shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="font-bold text-xs flex items-center justify-between">
+                      <span>Advertiser</span>
+                      {selectedRole === 'advertiser' && <span className="w-2 h-2 rounded-full bg-indigo-500"></span>}
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
+                      Post campaigns & get signups / clicks
+                    </p>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {mode === 'signup' && (
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
