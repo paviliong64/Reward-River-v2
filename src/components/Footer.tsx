@@ -1,6 +1,6 @@
 import React from 'react';
 import { Logo } from './Logo';
-import { Shield, HelpCircle, FileText, Lock, RefreshCw, Linkedin } from 'lucide-react';
+import { Shield, HelpCircle, FileText, Lock, RefreshCw, Linkedin, Github } from 'lucide-react';
 
 interface FooterProps {
   onOpenLegal: (page: string) => void;
@@ -125,7 +125,17 @@ export const Footer: React.FC<FooterProps> = ({ onOpenLegal, onSelectTab }) => {
                 title="Rayan Mirza LinkedIn Profile (@rynmirza)"
               >
                 <Linkedin className="w-3 h-3 text-[#0A66C2]" />
-                <span>Rayan Mirza (@rynmirza)</span>
+                <span>LinkedIn (@rynmirza)</span>
+              </a>
+              <a
+                href="https://github.com/rynzer0x"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-all text-[11px] font-semibold"
+                title="Rayan Mirza GitHub Profile (@rynzer0x)"
+              >
+                <Github className="w-3 h-3 text-slate-300" />
+                <span>GitHub (@rynzer0x)</span>
               </a>
             </div>
             <span className="text-slate-500">Earn Rewards. Flow Forward.</span>

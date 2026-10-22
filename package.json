@@ -3,8 +3,9 @@
   "private": true,
   "version": "2.0.0",
   "description": "Reward River - Production-Grade Micro-Tasks, Direct Offerwalls & USDT Rewards Platform Architected by Injazify Studios by Rayan Mirza",
-  "author": "Injazify Studios by Rayan Mirza <https://injazify.com>",
+  "author": "Injazify Studios by Rayan Mirza <https://github.com/rynzer0x>",
   "homepage": "https://injazify.com",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",

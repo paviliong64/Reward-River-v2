@@ -4,25 +4,29 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL_17-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
 [![Vercel](https://img.shields.io/badge/Deploy-Vercel_Ready-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
+[![GitHub Partner](https://img.shields.io/badge/Partner-Rayan_Mirza_(@rynzer0x)-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/rynzer0x)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Rayan_Mirza_(@rynmirza)-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/rynmirza)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![USDT](https://img.shields.io/badge/Settlement-USDT_(TRC20_%2F_ERC20)-26A17B?style=for-the-badge&logo=tether&logoColor=white)](https://tether.to)
 
 > **Reward River** is an enterprise-grade micro-tasks exchange, direct white-labeled survey marketplace, and cryptocurrency rewards platform. Engineered with a pure **Supabase (PostgreSQL 17)** backend, **JobsWorkTech** task workflows, **Reward River Direct Gateway** provider branding, an invisible **60/40 profit margin engine**, and turnkey **Vercel** deployment compatibility.
 
 ---
 
-## 🏛️ Engineered & Architected By
+## 🏛️ Executive Partnership & Architecture Leadership
 
-This platform is architected, developed, and maintained by **Injazify Studios by Rayan Mirza**:
+This platform is architected, co-founded, and governed under permanent joint partnership:
 
 * 🚀 **Injazify Studios**: [www.injazify.com](https://injazify.com)
-  * *Official Development Studio, Platform Engineering & Digital Infrastructure*
-* 🛠️ **Rayan Mirza** ([@rynmirza](https://linkedin.com/in/rynmirza)):
-  * 💼 **LinkedIn**: [linkedin.com/in/rynmirza](https://linkedin.com/in/rynmirza) (`@rynmirza`)
-  * 🐙 **GitHub**: [@zeroxnetworks](https://github.com/zeroxnetworks)
-  * *Founder, Lead Systems Architect & Co-Founder*
-* 💡 **Tahir Sanaullah**:
-  * *Product Architect & Co-Founder*
+  * *Official Development Studio, Digital Infrastructure & Enterprise Platform Engineering*
+* 👑 **Rayan Mirza** ([@rynzer0x](https://github.com/rynzer0x)):
+  * 🐙 **GitHub Partner Profile**: [github.com/rynzer0x](https://github.com/rynzer0x) (`@rynzer0x`)
+  * 💼 **Official LinkedIn**: [linkedin.com/in/rynmirza](https://linkedin.com/in/rynmirza) (`@rynmirza`)
+  * 🌐 **Studio**: [Injazify Studios](https://injazify.com)
+  * *Lead Systems Architect, Co-Founder, Executive Partner & Full Repository Maintainer*
+* 💡 **Tahir Sanaullah** ([@paviliong64](https://github.com/paviliong64)):
+  * 🐙 **GitHub Profile**: [github.com/paviliong64](https://github.com/paviliong64) (`@paviliong64`)
+  * *Product Architect, Co-Founder & Deployment Partner*
 
 ---
 
@@ -255,7 +259,16 @@ Reward-River/
 
 ---
 
-## ⚖️ License & Copyright
+## ⚖️ License & Permanent Authorship Notice
 
-Copyright © 2026 **Reward River**. All rights reserved.  
-Engineered with precision by **[Injazify Studios by Rayan Mirza](https://injazify.com)** ([injazify.com](https://injazify.com)) • **LinkedIn Profile:** [linkedin.com/in/rynmirza](https://linkedin.com/in/rynmirza) (`@rynmirza`).
+This project is licensed under the terms of the **MIT License**. See the [`LICENSE`](file:///d:/reward%20river/Reward-River/LICENSE) file for the full text.
+
+```text
+Copyright (c) 2026 Reward River Platform Core. All rights reserved.
+Architected, Engineered & Maintained by:
+- Injazify Studios (https://injazify.com)
+- Rayan Mirza (https://github.com/rynzer0x | https://linkedin.com/in/rynmirza)
+- paviliong64 / Tahir Sanaullah (https://github.com/paviliong64)
+```
+
+> **Immutable Attribution Clause:** All derivative works, production deployments, and commercial instances of Reward River must preserve full copyright authorship and attribution to **Injazify Studios**, **Rayan Mirza ([@rynzer0x](https://github.com/rynzer0x))**, and **paviliong64**.
