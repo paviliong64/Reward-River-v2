@@ -56,7 +56,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const faqs = [
     {
       q: 'How does earning on Reward River work?',
-      a: 'Registered workers can earn Points by completing advertiser micro-tasks (app installs, sign-ups, social actions) and participating in our Direct Partner Streams (consumer research surveys, verified app installs, and interactive sponsor tasks). 10,000 Points equals $1.00 USDT wallet value.'
+      a: 'Members earn Points by completing sponsored micro-tasks (app installs, sign-ups, social actions) and participating in our Direct Partner Streams (consumer research surveys, verified app milestones, and interactive sponsor tasks). 10,000 Points equals $1.00 USDT wallet value.'
     },
     {
       q: 'How are micro-tasks verified and approved?',
@@ -64,7 +64,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     },
     {
       q: 'How do advertisers launch campaigns and fund their budget?',
-      a: 'Advertisers deposit funds (via FaucetPay or USDT). When creating a task campaign, you specify the target worker slots and reward points. The exact user reward budget and 10% platform fee are reserved upfront so campaign accounting stays completely reconciled. Unused budget from paused campaigns is safely released.'
+      a: 'Advertisers deposit funds (via FaucetPay or USDT). When creating a campaign, you specify the target participant capacity and reward points. The exact member reward budget and 10% platform fee are reserved upfront so campaign accounting stays completely reconciled. Unused budget from paused campaigns is safely released.'
     },
     {
       q: 'Which withdrawal methods are supported?',
@@ -228,8 +228,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <span className="text-xl sm:text-2xl font-black text-sky-600 block">
               {metrics.registeredWorkers.toLocaleString()}
             </span>
-            <span className="text-xs font-bold text-slate-700 block mt-0.5">Registered workers</span>
-            <small className="text-[10px] text-slate-400 block mt-0.5">Active worker accounts</small>
+            <span className="text-xs font-bold text-slate-700 block mt-0.5">Active Members</span>
+            <small className="text-[10px] text-slate-400 block mt-0.5">Verified community</small>
           </div>
           <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center shadow-xs">
             <span className="text-xl sm:text-2xl font-black text-slate-900 block">
@@ -272,7 +272,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 Direct Earning Streams & Instant Rewards.
               </h2>
               <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-                Direct Streams give registered workers endless ways to earn Points by completing verified consumer opinion surveys, sponsored mobile app milestones, and interactive tasks. Rewards are verified and credited directly to your wallet in real-time.
+                Direct Streams give community members endless ways to earn Points by completing verified consumer opinion surveys, sponsored mobile app milestones, and interactive tasks. Rewards are verified and credited directly to your wallet in real-time.
               </p>
               <div className="flex flex-wrap gap-2 pt-2">
                 <span className="px-3 py-1 bg-white/10 rounded-lg text-xs font-semibold">✓ Direct Research Surveys</span>
@@ -314,12 +314,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 Launch campaigns with a balance you can actually reconcile.
               </h2>
               <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-                Create a task in Points, choose the number of workers, and see the exact campaign cost before funding it. Worker budget is reserved separately from the platform fee, so available, reserved and spent funds stay easy to understand.
+                Create a task in Points, choose target participant capacity, and see the exact campaign cost before funding it. Campaign budget is reserved separately from the platform fee, so available, reserved and spent funds stay easy to understand.
               </p>
               <div className="space-y-2 text-xs text-slate-700 pt-2">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>User receives the full advertised task reward</span>
+                  <span>Participant receives the full advertised task reward</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -327,7 +327,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Unused eligible worker budget can be released safely</span>
+                  <span>Unused eligible campaign budget can be released safely</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -343,15 +343,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <small className="text-[11px] text-slate-400">Platform fee 10%</small>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-slate-400">Reward per worker</span>
+                <span className="text-slate-400">Reward per completion</span>
                 <span className="font-bold">1,000 Points</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-slate-400">Workers</span>
+                <span className="text-slate-400">Target Completions</span>
                 <span className="font-bold">500</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-slate-400">User reward budget</span>
+                <span className="text-slate-400">Member reward budget</span>
                 <span className="font-bold">500,000 Points</span>
               </div>
               <div className="flex justify-between text-xs">

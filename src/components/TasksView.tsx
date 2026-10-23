@@ -279,7 +279,7 @@ export function TasksView({
                       {/* Slots Progress Bar */}
                       <div className="mt-4 pt-3 border-t border-slate-100">
                         <div className="flex justify-between items-center text-xs mb-1.5">
-                          <span className="text-slate-500">Worker slots</span>
+                          <span className="text-slate-500">Task capacity</span>
                           <span className="font-semibold text-slate-700">
                             {task.completedSlots} / {task.totalSlots} filled
                           </span>

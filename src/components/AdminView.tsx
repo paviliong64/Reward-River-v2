@@ -458,7 +458,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
         body: JSON.stringify({ action: 'reject', notes: rejectModal.reason.trim() })
       });
       if (res.ok) {
-        setActionMessage({ text: 'Withdrawal rejected and funds refunded back to worker wallet.', type: 'success' });
+        setActionMessage({ text: 'Withdrawal rejected and funds refunded back to member wallet.', type: 'success' });
         setRejectModal(null);
         fetchAdminData();
         triggerRefresh();
@@ -777,7 +777,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
               {financials.userDisbursedFormatted}
             </span>
             <span className="text-[10px] text-slate-400 block mt-0.5 font-mono">
-              {financials.userDisbursedPoints.toLocaleString()} Pts to Workers
+              {financials.userDisbursedPoints.toLocaleString()} Pts to Members
             </span>
           </div>
 
@@ -944,9 +944,9 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
                   <tr className="border-b border-slate-200 text-slate-400 font-semibold">
                     <th className="py-2.5 px-3">Date</th>
                     <th className="py-2.5 px-3">Provider / Source</th>
-                    <th className="py-2.5 px-3">Worker</th>
+                    <th className="py-2.5 px-3">Member</th>
                     <th className="py-2.5 px-3 text-right">Gross Paid</th>
-                    <th className="py-2.5 px-3 text-right">Worker Share (40%)</th>
+                    <th className="py-2.5 px-3 text-right">Member Share (40%)</th>
                     <th className="py-2.5 px-3 text-right text-emerald-600 font-bold">Reward River Profit (60%)</th>
                   </tr>
                 </thead>
@@ -1227,7 +1227,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
 
             <div className="p-4 rounded-xl border border-sky-200 bg-sky-50/50">
               <label className="block text-xs font-bold text-sky-900 mb-1">
-                Worker User Share %
+                Member User Share %
               </label>
               <input
                 type="number"
@@ -1244,7 +1244,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
                 }}
                 className="w-full px-3 py-2 text-base font-black text-sky-900 rounded-lg border border-sky-300 bg-white"
               />
-              <span className="text-[10px] text-sky-700 mt-1 block">Default: 40% paid to worker</span>
+              <span className="text-[10px] text-sky-700 mt-1 block">Default: 40% paid to member</span>
             </div>
 
             <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
@@ -1579,7 +1579,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
       {activeSubTab === 'submissions' && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-900">Worker Proof Submissions Queue</h3>
+            <h3 className="text-base font-bold text-slate-900">Member Proof Submissions Queue</h3>
             <span className="text-xs text-slate-400">
               {submissionsList.filter(s => s.status === 'pending_review').length} Pending Review
             </span>
@@ -1590,7 +1590,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
               <div key={sub.id} className="border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div>
                   <h4 className="font-bold text-slate-900 text-sm">{sub.taskTitle}</h4>
-                  <p className="text-xs text-slate-500">Worker: {sub.workerEmail} • {new Date(sub.submittedAt).toLocaleString()}</p>
+                  <p className="text-xs text-slate-500">Member: {sub.workerEmail} • {new Date(sub.submittedAt).toLocaleString()}</p>
                   {sub.proofText && (
                     <p className="text-xs text-slate-700 bg-slate-50 p-2 rounded-lg mt-2 font-mono">{sub.proofText}</p>
                   )}
@@ -1642,7 +1642,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
               <span>1-Click Offerwall & Survey Postback Simulator</span>
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Instantly test any provider integration. The simulator exercises the real postback engine, verifies the 60% platform treasury profit split, and credits 40% to the worker.
+              Instantly test any provider integration. The simulator exercises the real postback engine, verifies the 60% platform treasury profit split, and credits 40% to the member.
             </p>
           </div>
 
@@ -2068,7 +2068,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
 
               <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
                 <div>
-                  <label className="block text-xs font-bold text-sky-900 mb-1">Worker Payout Share %</label>
+                  <label className="block text-xs font-bold text-sky-900 mb-1">Member Payout Share %</label>
                   <input
                     type="number"
                     min="1"
@@ -2257,7 +2257,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
               <span>Reject Withdrawal & Refund Funds</span>
             </h4>
             <p className="text-xs text-slate-500">
-              The reserved withdrawal funds will be automatically unreserved and restored to the worker's confirmed balance.
+              The reserved withdrawal funds will be automatically unreserved and restored to the member's confirmed balance.
             </p>
 
             <div>

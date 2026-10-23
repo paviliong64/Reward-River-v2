@@ -284,7 +284,7 @@ export function AdvertiserView({
               <Layers className="w-12 h-12 text-slate-300 mx-auto mb-3" />
               <h3 className="text-base font-bold text-slate-800">No campaigns created yet</h3>
               <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                Ready to promote your project, social channel, or mobile app? Create your first campaign with custom worker slots.
+                Ready to promote your project, social channel, or mobile app? Create your first campaign with custom participant slots.
               </p>
               <button
                 onClick={() => setActiveTab('create')}
@@ -344,7 +344,7 @@ export function AdvertiserView({
 
                     <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                       <div>
-                        <span className="text-slate-400 block">Reward per worker</span>
+                        <span className="text-slate-400 block">Reward per completion</span>
                         <span className="font-bold text-slate-900">
                           {camp.rewardPoints.toLocaleString()} Points (${(camp.rewardCents / 100).toFixed(2)})
                         </span>
@@ -383,7 +383,7 @@ export function AdvertiserView({
           <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm">
             <h2 className="text-lg font-bold text-slate-900 mb-1">Create Campaign</h2>
             <p className="text-xs text-slate-500 mb-6">
-              Worker budget is reserved safely upon campaign submission.
+              Campaign reward budget is reserved safely upon campaign submission.
             </p>
 
             <form onSubmit={handleCreateSubmit} className="space-y-4">
@@ -439,7 +439,7 @@ export function AdvertiserView({
                   required
                   value={description}
                   onChange={e => setDescription(e.target.value)}
-                  placeholder="Brief summary of what the worker needs to do"
+                  placeholder="Brief summary of what participants need to do"
                   className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-800"
                 />
               </div>
@@ -461,7 +461,7 @@ export function AdvertiserView({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Reward Points per Worker <span className="text-rose-500">*</span>
+                    Reward Points per Completion <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -473,12 +473,12 @@ export function AdvertiserView({
                     className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-800"
                   />
                   <span className="text-[11px] text-slate-400 mt-0.5 block">
-                    ≈ ${(rewardPoints / pointsRate).toFixed(2)} USDT value per worker
+                    ≈ ${(rewardPoints / pointsRate).toFixed(2)} USDT value per completion
                   </span>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Target Workers (Slots) <span className="text-rose-500">*</span>
+                    Target Completions (Slots) <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -570,15 +570,15 @@ export function AdvertiserView({
 
               <div className="space-y-3 text-xs border-t border-slate-800 pt-3">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Reward per worker</span>
+                  <span className="text-slate-400">Reward per completion</span>
                   <span className="font-bold">{rewardPoints.toLocaleString()} Points</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Target Workers</span>
+                  <span className="text-slate-400">Target Completions</span>
                   <span className="font-bold">{slots}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">User reward budget</span>
+                  <span className="text-slate-400">Member reward budget</span>
                   <span className="font-bold">{userRewardBudgetPoints.toLocaleString()} Points</span>
                 </div>
                 <div className="flex justify-between">
@@ -600,9 +600,9 @@ export function AdvertiserView({
               </div>
 
               <div className="mt-5 pt-4 border-t border-slate-800 text-[11px] text-slate-400 space-y-1.5">
-                <div>✓ User receives full advertised reward</div>
+                <div>✓ Participant receives full advertised reward</div>
                 <div>✓ Platform fee added separately at {feePercent}%</div>
-                <div>✓ Unused worker budget can be safely released</div>
+                <div>✓ Unused campaign budget can be safely released</div>
               </div>
             </div>
           </div>
@@ -614,8 +614,8 @@ export function AdvertiserView({
         <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-base font-bold text-slate-900">Worker Proof Submissions</h2>
-              <p className="text-xs text-slate-500">Review submitted work. Approved rewards credit worker instantly.</p>
+              <h2 className="text-base font-bold text-slate-900">Proof Submissions Queue</h2>
+              <p className="text-xs text-slate-500">Review submitted work. Approved rewards credit member balances instantly.</p>
             </div>
             <button onClick={onRefresh} className="text-xs text-sky-600 font-semibold hover:underline">
               Refresh
@@ -624,7 +624,7 @@ export function AdvertiserView({
 
           {submissions.length === 0 ? (
             <div className="p-12 text-center text-slate-400 text-xs">
-              No worker submissions currently pending review.
+              No proof submissions currently pending review.
             </div>
           ) : (
             <div className="space-y-4">
@@ -633,7 +633,7 @@ export function AdvertiserView({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <span className="font-bold text-sm text-slate-900">{sub.taskTitle}</span>
-                      <span className="text-xs text-slate-400 block">Worker: {sub.workerEmail}</span>
+                      <span className="text-xs text-slate-400 block">Member: {sub.workerEmail}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-sky-600">
@@ -723,7 +723,7 @@ export function AdvertiserView({
               Deposit Funds
             </h2>
             <p className="text-xs text-slate-500 mb-4">
-              Add budget to launch new worker campaigns. External payments credit automatically in Points.
+              Add budget to launch new advertising campaigns. External payments credit automatically in Points.
             </p>
 
             <form onSubmit={handleDeposit} className="space-y-4">
@@ -832,9 +832,9 @@ export function AdvertiserView({
       {rejectingSub && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
-            <h3 className="text-base font-bold text-slate-900">Reject Worker Submission</h3>
+            <h3 className="text-base font-bold text-slate-900">Reject Proof Submission</h3>
             <p className="text-xs text-slate-500">
-              Provide a clear reason explaining why the submitted proof was insufficient so the worker can correct it.
+              Provide a clear reason explaining why the submitted proof was insufficient so the member can review it.
             </p>
             <textarea
               rows={3}
@@ -877,7 +877,7 @@ export function AdvertiserView({
             <div className="rounded-xl overflow-hidden bg-slate-100 border border-slate-200 max-h-[70vh] flex items-center justify-center">
               <img
                 src={previewScreenshotUrl}
-                alt="Worker Proof"
+                alt="Submission Proof"
                 className="max-h-[68vh] object-contain"
                 onError={e => {
                   (e.target as HTMLElement).style.display = 'none';
