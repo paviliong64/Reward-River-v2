@@ -602,7 +602,6 @@ export default function App() {
         }}
         onSignOut={handleSignOut}
         onOpenLegal={(page) => setLegalModalPage(page)}
-        onSwitchRole={handleSwitchRole}
       />
 
       {/* Main Content Area */}
@@ -615,11 +614,6 @@ export default function App() {
             }}
             onOpenLegal={(page) => setLegalModalPage(page)}
             usdtQuote={usdtQuote}
-            onSelectRoleSignup={(role) => {
-              setAuthRoleChoice(role);
-              setAuthInitialMode('signup');
-              setAuthModalOpen(true);
-            }}
           />
         )}
 

@@ -260,51 +260,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           <form onSubmit={handleSubmit} className="space-y-3.5">
             {mode === 'signup' && (
-              <div className="mb-2">
-                <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                  I want to use Reward River as:
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole('user')}
-                    className={`p-2.5 rounded-xl border text-left transition-all ${
-                      selectedRole === 'user'
-                        ? 'border-sky-500 bg-sky-50/80 text-sky-950 ring-2 ring-sky-500/20 shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="font-bold text-xs flex items-center justify-between">
-                      <span>Earner Account</span>
-                      {selectedRole === 'user' && <span className="w-2 h-2 rounded-full bg-sky-500"></span>}
-                    </div>
-                    <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
-                      Complete tasks & earn Points / USDT
-                    </p>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole('advertiser')}
-                    className={`p-2.5 rounded-xl border text-left transition-all ${
-                      selectedRole === 'advertiser'
-                        ? 'border-indigo-500 bg-indigo-50/80 text-indigo-950 ring-2 ring-indigo-500/20 shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="font-bold text-xs flex items-center justify-between">
-                      <span>Advertiser Account</span>
-                      {selectedRole === 'advertiser' && <span className="w-2 h-2 rounded-full bg-indigo-500"></span>}
-                    </div>
-                    <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
-                      Post campaigns & launch promotions
-                    </p>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {mode === 'signup' && (
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Full Name or Nickname (Optional)

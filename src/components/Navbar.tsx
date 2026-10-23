@@ -4,23 +4,15 @@ import { User, UserBalances, UsdtQuote } from '../types';
 import { usdCentsToUsdt } from '../utils/usdt';
 import {
   LayoutDashboard,
-  ClipboardList,
-  Coins,
+  Layers,
+  Sparkles,
   ArrowUpRight,
   Receipt,
   Settings,
   ShieldCheck,
   LogOut,
   Menu,
-  X,
-  Briefcase,
-  Layers,
-  PlusCircle,
-  CheckSquare,
-  Wallet,
-  Repeat,
-  Github,
-  Linkedin
+  X
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -32,7 +24,6 @@ interface NavbarProps {
   onOpenAuth: (mode: 'signin' | 'signup') => void;
   onSignOut: () => void;
   onOpenLegal: (page: string) => void;
-  onSwitchRole?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -41,38 +32,25 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentTab,
   onSelectTab,
   onOpenAuth,
-  onSignOut,
-  onSwitchRole
+  onSignOut
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const availableCents = balances?.availableCents ?? 0;
   const usdtAmount = usdCentsToUsdt(availableCents).toFixed(2);
-  const pointsAmount = (availableCents * 100).toLocaleString(); // 10,000 Points = $1 (100 pts / cent)
+  const pointsAmount = (availableCents * 100).toLocaleString(); // 10,000 Points = $1
 
-  const isAdvertiser = user?.role === 'advertiser';
   const isAdmin = user?.role === 'admin';
 
-  // Worker Nav Items
-  const workerNavItems = [
+  // Streamlined, high-profile nav items for users
+  const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'tasks', label: 'Tasks', icon: Layers },
-    { id: 'surveys', label: 'Direct Streams', icon: ClipboardList },
+    { id: 'surveys', label: 'Direct Streams', icon: Sparkles },
     { id: 'withdraw', label: 'Withdraw', icon: ArrowUpRight },
     { id: 'transactions', label: 'History', icon: Receipt },
     { id: 'settings', label: 'Settings', icon: Settings }
   ];
-
-  // Advertiser Nav Items
-  const advertiserNavItems = [
-    { id: 'advertiser', label: 'Campaigns', icon: Briefcase },
-    { id: 'advertiser-create', label: 'Create Task', icon: PlusCircle },
-    { id: 'advertiser-proofs', label: 'Review Proofs', icon: CheckSquare },
-    { id: 'advertiser-billing', label: 'Billing & Deposits', icon: Wallet },
-    { id: 'settings', label: 'Settings', icon: Settings }
-  ];
-
-  const navItems = isAdvertiser ? advertiserNavItems : workerNavItems;
 
   if (isAdmin) {
     navItems.push({ id: 'admin', label: 'Admin Portal', icon: ShieldCheck });
@@ -84,73 +62,43 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Brand Logo & Mode Badge */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="flex items-center justify-between h-16 sm:h-18">
+          {/* Brand Logo */}
+          <div className="flex items-center gap-3 shrink-0">
             <button
-              onClick={() => handleNavClick(user ? (isAdvertiser ? 'advertiser' : 'dashboard') : 'landing')}
-              className="text-left focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-lg p-1"
+              onClick={() => handleNavClick(user ? 'dashboard' : 'landing')}
+              className="text-left focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-xl p-1 transition"
               aria-label="Reward River Home"
             >
               <Logo size="md" showTagline={!user} />
             </button>
-
-            {/* Injazify Studios & Creator Profile Badges */}
-            <div className="hidden xl:flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200/80 text-[11px] text-slate-500">
-              <span className="text-slate-400">By</span>
-              <a
-                href="https://injazify.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-slate-700 hover:text-sky-600 transition-colors"
-                title="Injazify Studios"
-              >
-                Injazify Studios
-              </a>
-              <span className="text-slate-300">•</span>
-              <a
-                href="https://github.com/rynzer0x"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-slate-400 hover:text-slate-900 transition-colors inline-flex items-center"
-                title="GitHub"
-                aria-label="GitHub Profile"
-              >
-                <Github className="w-3.5 h-3.5" />
-              </a>
-              <a
-                href="https://linkedin.com/in/rynmirza"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-slate-400 hover:text-[#0A66C2] transition-colors inline-flex items-center"
-                title="LinkedIn"
-                aria-label="LinkedIn Profile"
-              >
-                <Linkedin className="w-3.5 h-3.5" />
-              </a>
-            </div>
           </div>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation Tabs */}
           {user ? (
-            <nav className="hidden md:flex items-center gap-1" aria-label="Main Navigation">
+            <nav className="hidden lg:flex items-center gap-1.5" aria-label="Main Navigation">
               {navItems.map(item => {
                 const Icon = item.icon;
                 const isActive = currentTab === item.id;
+                const isAdminItem = item.id === 'admin';
                 return (
                   <button
                     key={item.id}
                     onClick={() => handleNavClick(item.id)}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-colors ${
+                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs xl:text-sm font-semibold transition-all duration-150 ${
                       isActive
-                        ? 'bg-sky-50 text-sky-700 font-bold'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                        ? isAdminItem
+                          ? 'bg-rose-50 text-rose-700 font-bold border border-rose-200/80 shadow-xs'
+                          : 'bg-sky-50 text-sky-700 font-bold border border-sky-100 shadow-xs'
+                        : isAdminItem
+                        ? 'text-rose-600 hover:text-rose-800 hover:bg-rose-50/60'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-sky-600' : 'text-slate-400'}`} />
-                    {item.label}
+                    <Icon className={`w-4 h-4 ${isActive ? (isAdminItem ? 'text-rose-600' : 'text-sky-600') : 'text-slate-400'}`} />
+                    <span>{item.label}</span>
                   </button>
                 );
               })}
@@ -173,7 +121,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={() => handleNavClick('landing')}
                 className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
               >
-                Advertisers
+                Direct Streams
               </button>
               <button
                 onClick={() => handleNavClick('landing')}
@@ -184,79 +132,52 @@ export const Navbar: React.FC<NavbarProps> = ({
             </nav>
           )}
 
-          {/* Right Header Actions */}
+          {/* Right Header Controls */}
           <div className="flex items-center gap-2 sm:gap-3">
             {user ? (
-              <div className="flex items-center gap-2 sm:gap-3">
-                {/* Switch Role Button */}
-                {!isAdmin && onSwitchRole && (
-                  <button
-                    onClick={onSwitchRole}
-                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
-                    title={`Switch to ${isAdvertiser ? 'Earner' : 'Advertiser'} View`}
-                  >
-                    <Repeat className="w-3.5 h-3.5 text-slate-500" />
-                    <span>{isAdvertiser ? 'Earner View' : 'Advertiser View'}</span>
-                  </button>
-                )}
-
-                {/* Worker Balance (Points + USDT) */}
-                {!isAdvertiser && (
-                  <button
-                    onClick={() => handleNavClick('withdraw')}
-                    className="group flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/70 to-white hover:from-emerald-100/70 hover:to-teal-50 border border-emerald-200 hover:border-emerald-400 shadow-xs transition-all text-left"
-                    title="Your Available Wallet Balance — Click to Withdraw USDT"
-                  >
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-black text-xs shadow-xs">
-                      ₮
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <div className="flex items-baseline gap-1 leading-tight">
-                        <span className="text-xs font-extrabold text-slate-900 font-mono">
-                          {pointsAmount} <span className="text-[10px] text-slate-500 font-sans">Pts</span>
-                        </span>
-                      </div>
-                      <div className="text-[10px] font-semibold text-emerald-600 flex items-center gap-1 leading-none mt-0.5">
-                        <span>${usdtAmount} USDT</span>
-                      </div>
-                    </div>
-                  </button>
-                )}
-
-                {/* Advertiser Balance */}
-                {isAdvertiser && (
-                  <button
-                    onClick={() => handleNavClick('advertiser-billing')}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-left transition"
-                    title="Advertiser Deposit Balance"
-                  >
-                    <Wallet className="w-4 h-4 text-amber-600" />
-                    <div>
-                      <div className="text-xs font-bold text-amber-950 font-mono">
-                        ${((user.advertiserBalanceCents || 0) / 100).toFixed(2)} USDT
-                      </div>
-                      <div className="text-[10px] font-medium text-amber-700">Deposit Wallet</div>
-                    </div>
-                  </button>
-                )}
-
-                {/* User Settings Icon */}
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                {/* Wallet Balance Pill */}
                 <button
-                  onClick={() => handleNavClick('settings')}
-                  className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 transition text-slate-700"
-                  title={user.email}
-                  aria-label="User Settings"
+                  onClick={() => handleNavClick('withdraw')}
+                  className="group flex items-center gap-2.5 px-3 sm:px-3.5 py-1.5 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/80 to-white hover:from-emerald-100/80 hover:to-teal-100/50 border border-emerald-200/90 hover:border-emerald-300 shadow-xs transition-all text-left"
+                  title="Your Available Wallet Balance — Click to Withdraw USDT"
                 >
-                  <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-800 flex items-center justify-center font-bold text-xs uppercase">
-                    {user.displayName?.[0] || user.email[0]}
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-black text-xs shadow-xs">
+                    ₮
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-baseline gap-1 leading-tight">
+                      <span className="text-xs font-black text-slate-900 font-mono tracking-tight">
+                        {pointsAmount} <span className="text-[10px] text-slate-500 font-sans font-semibold">Pts</span>
+                      </span>
+                    </div>
+                    <div className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5 leading-none mt-0.5 font-mono">
+                      <span>${usdtAmount} USDT</span>
+                    </div>
                   </div>
                 </button>
 
-                {/* Sign Out Icon */}
+                {/* User Avatar & Settings Trigger */}
+                <button
+                  onClick={() => handleNavClick('settings')}
+                  className="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-100 transition text-slate-700"
+                  title={user.email}
+                  aria-label="User Settings"
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 text-white flex items-center justify-center font-bold text-xs uppercase shadow-xs">
+                    {user.displayName?.[0] || user.email[0]}
+                  </div>
+                  <span className="hidden xl:inline-block text-xs font-semibold text-slate-700 max-w-[110px] truncate">
+                    {user.displayName || user.email.split('@')[0]}
+                  </span>
+                </button>
+
+                {/* Sign Out Button */}
                 <button
                   onClick={onSignOut}
-                  className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition"
+                  className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
                   title="Sign Out"
+                  aria-label="Sign Out"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -278,11 +199,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             )}
 
-            {/* Mobile Hamburger Button */}
+            {/* Mobile Hamburger Menu Toggle */}
             {user && (
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition"
+                className="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition"
                 aria-label="Toggle mobile menu"
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -294,36 +215,27 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && user && (
-        <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-2 animate-fadeIn">
-          {/* Mobile Role Switcher */}
-          {!isAdmin && onSwitchRole && (
-            <button
-              onClick={() => {
-                onSwitchRole();
-                setMobileMenuOpen(false);
-              }}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-100 text-slate-700 font-semibold text-xs mb-2"
-            >
-              <Repeat className="w-4 h-4" />
-              Switch to {isAdvertiser ? 'Earner View' : 'Advertiser View'}
-            </button>
-          )}
-
+        <div className="lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-1.5 animate-fadeIn shadow-lg">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = currentTab === item.id;
+            const isAdminItem = item.id === 'admin';
             return (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition ${
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition ${
                   isActive
-                    ? 'bg-sky-50 text-sky-700 font-bold'
+                    ? isAdminItem
+                      ? 'bg-rose-50 text-rose-700 font-bold'
+                      : 'bg-sky-50 text-sky-700 font-bold'
+                    : isAdminItem
+                    ? 'text-rose-600 hover:bg-rose-50/50'
                     : 'text-slate-700 hover:bg-slate-50'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-sky-600' : 'text-slate-400'}`} />
-                {item.label}
+                <Icon className={`w-4 h-4 ${isActive ? (isAdminItem ? 'text-rose-600' : 'text-sky-600') : 'text-slate-400'}`} />
+                <span>{item.label}</span>
               </button>
             );
           })}
@@ -334,27 +246,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setMobileMenuOpen(false);
                 onSignOut();
               }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50"
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-rose-600 hover:bg-rose-50 transition"
             >
               <LogOut className="w-4 h-4" />
-              Sign Out
+              <span>Sign Out</span>
             </button>
-          </div>
-
-          <div className="pt-2 pb-1 flex items-center justify-center gap-2 text-[10px] text-slate-400">
-            <span>
-              Architected by{' '}
-              <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-600 hover:text-sky-600">
-                Injazify Studios
-              </a>
-            </span>
-            <span className="text-slate-300">•</span>
-            <a href="https://github.com/rynzer0x" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-700" title="GitHub" aria-label="GitHub Profile">
-              <Github className="w-3.5 h-3.5" />
-            </a>
-            <a href="https://linkedin.com/in/rynmirza" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-[#0A66C2]" title="LinkedIn" aria-label="LinkedIn Profile">
-              <Linkedin className="w-3.5 h-3.5" />
-            </a>
           </div>
         </div>
       )}
