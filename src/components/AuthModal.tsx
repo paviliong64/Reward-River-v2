@@ -275,7 +275,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     }`}
                   >
                     <div className="font-bold text-xs flex items-center justify-between">
-                      <span>Worker / Earner</span>
+                      <span>Earner Account</span>
                       {selectedRole === 'user' && <span className="w-2 h-2 rounded-full bg-sky-500"></span>}
                     </div>
                     <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
@@ -293,11 +293,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     }`}
                   >
                     <div className="font-bold text-xs flex items-center justify-between">
-                      <span>Advertiser</span>
+                      <span>Advertiser Account</span>
                       {selectedRole === 'advertiser' && <span className="w-2 h-2 rounded-full bg-indigo-500"></span>}
                     </div>
                     <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
-                      Post campaigns & get signups / clicks
+                      Post campaigns & launch promotions
                     </p>
                   </button>
                 </div>

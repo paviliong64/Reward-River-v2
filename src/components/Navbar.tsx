@@ -18,7 +18,9 @@ import {
   PlusCircle,
   CheckSquare,
   Wallet,
-  Repeat
+  Repeat,
+  Github,
+  Linkedin
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -95,15 +97,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Logo size="md" showTagline={!user} />
             </button>
 
-            {/* Injazify Studios & Rayan Mirza Architectural Badge */}
-            <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200/80 text-[11px] text-slate-500">
+            {/* Injazify Studios & Creator Profile Badges */}
+            <div className="hidden xl:flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200/80 text-[11px] text-slate-500">
               <span className="text-slate-400">By</span>
               <a
                 href="https://injazify.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-bold text-slate-700 hover:text-sky-600 transition-colors"
-                title="Injazify Studios Official Website"
+                title="Injazify Studios"
               >
                 Injazify Studios
               </a>
@@ -112,24 +114,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                 href="https://github.com/rynzer0x"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-bold text-slate-700 hover:text-sky-600 transition-colors"
-                title="Rayan Mirza GitHub Profile"
+                className="text-slate-400 hover:text-slate-900 transition-colors inline-flex items-center"
+                title="GitHub"
+                aria-label="GitHub Profile"
               >
-                Rayan Mirza
+                <Github className="w-3.5 h-3.5" />
+              </a>
+              <a
+                href="https://linkedin.com/in/rynmirza"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-400 hover:text-[#0A66C2] transition-colors inline-flex items-center"
+                title="LinkedIn"
+                aria-label="LinkedIn Profile"
+              >
+                <Linkedin className="w-3.5 h-3.5" />
               </a>
             </div>
-
-            {user && !isAdmin && (
-              <span
-                className={`hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
-                  isAdvertiser
-                    ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                    : 'bg-sky-100 text-sky-800 border border-sky-200'
-                }`}
-              >
-                {isAdvertiser ? 'Advertiser Mode' : 'Worker Mode'}
-              </span>
-            )}
           </div>
 
           {/* Desktop Navigation */}
@@ -192,10 +193,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button
                     onClick={onSwitchRole}
                     className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
-                    title={`Switch to ${isAdvertiser ? 'Worker' : 'Advertiser'} Mode`}
+                    title={`Switch to ${isAdvertiser ? 'Earner' : 'Advertiser'} View`}
                   >
                     <Repeat className="w-3.5 h-3.5 text-slate-500" />
-                    <span>{isAdvertiser ? 'Worker Mode' : 'Advertiser Hub'}</span>
+                    <span>{isAdvertiser ? 'Earner View' : 'Advertiser View'}</span>
                   </button>
                 )}
 
@@ -304,7 +305,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-100 text-slate-700 font-semibold text-xs mb-2"
             >
               <Repeat className="w-4 h-4" />
-              Switch to {isAdvertiser ? 'Worker Mode' : 'Advertiser Hub'}
+              Switch to {isAdvertiser ? 'Earner View' : 'Advertiser View'}
             </button>
           )}
 
@@ -340,14 +341,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
 
-          <div className="pt-2 pb-1 text-center text-[10px] text-slate-400">
-            Architected by{' '}
-            <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-600 hover:text-sky-600">
-              Injazify Studios
-            </a>{' '}
-            by{' '}
-            <a href="https://github.com/rynzer0x" target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-600 hover:text-sky-600">
-              Rayan Mirza
+          <div className="pt-2 pb-1 flex items-center justify-center gap-2 text-[10px] text-slate-400">
+            <span>
+              Architected by{' '}
+              <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-600 hover:text-sky-600">
+                Injazify Studios
+              </a>
+            </span>
+            <span className="text-slate-300">•</span>
+            <a href="https://github.com/rynzer0x" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-700" title="GitHub" aria-label="GitHub Profile">
+              <Github className="w-3.5 h-3.5" />
+            </a>
+            <a href="https://linkedin.com/in/rynmirza" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-[#0A66C2]" title="LinkedIn" aria-label="LinkedIn Profile">
+              <Linkedin className="w-3.5 h-3.5" />
             </a>
           </div>
         </div>

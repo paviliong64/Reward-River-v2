@@ -113,10 +113,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal max-w-xl">
-              A secure micro-task marketplace connecting workers and advertisers. Complete simple tasks and surveys to earn USDT, or launch targeted campaigns with guaranteed human proof.
+              A premium micro-task and direct survey network. Complete tasks and partner streams to earn USDT, or launch targeted campaigns with verified human engagement.
             </p>
 
-            {/* Dual CTAs for Workers & Advertisers */}
+            {/* Dual CTAs */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
               <button
                 onClick={() => {
@@ -125,7 +125,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 }}
                 className="px-6 py-3.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm sm:text-base shadow-lg shadow-sky-500/25 transition flex items-center justify-center gap-2"
               >
-                Start Earning (Worker)
+                Start Earning Rewards
                 <ArrowRight className="w-4 h-4" />
               </button>
               <button
@@ -135,7 +135,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 }}
                 className="px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base shadow-md transition flex items-center justify-center gap-2"
               >
-                Post a Task (Advertiser)
+                Launch Campaign
               </button>
             </div>
 
@@ -428,7 +428,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               Get Started Now
             </span>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
-              One platform for workers and advertisers.
+              One unified platform to earn and grow.
             </h2>
             <p className="text-slate-300 text-sm sm:text-base">
               Create the account that fits your goals and manage everything from a fast, responsive dashboard.
@@ -442,7 +442,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               }}
               className="px-8 py-3.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm rounded-xl shadow-lg transition"
             >
-              Earn Points (Worker)
+              Start Earning Rewards
             </button>
             <button
               onClick={() => {
@@ -451,7 +451,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               }}
               className="px-8 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-sm rounded-xl transition border border-white/20"
             >
-              Create Campaigns (Advertiser)
+              Launch Campaigns
             </button>
           </div>
         </div>

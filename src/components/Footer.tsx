@@ -59,15 +59,6 @@ export const Footer: React.FC<FooterProps> = ({ onOpenLegal, onSelectTab }) => {
                   Support & Contact
                 </button>
               </li>
-              <li>
-                <button
-                  onClick={() => onSelectTab ? onSelectTab('admin') : (window.location.hash = '#admin')}
-                  className="hover:text-cyan-400 transition-colors flex items-center gap-1.5 text-slate-400"
-                >
-                  <Shield className="w-3.5 h-3.5 text-cyan-400" />
-                  Command Center (Admin)
-                </button>
-              </li>
             </ul>
           </div>
 
@@ -116,27 +107,29 @@ export const Footer: React.FC<FooterProps> = ({ onOpenLegal, onSelectTab }) => {
             <div id="rr-injazify-brand-lock" className="flex items-center gap-2 flex-wrap">
               <span>© {new Date().getFullYear()} Reward River. All rights reserved.</span>
               <span className="text-slate-600">•</span>
-              <span>Architected & Built with precision by <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 font-bold hover:underline transition-colors">Injazify Studios</a> by <strong className="text-white">Rayan Mirza</strong> (<a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white hover:underline">injazify.com</a>)</span>
-              <a
-                href="https://linkedin.com/in/rynmirza"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0A66C2]/20 hover:bg-[#0A66C2]/30 border border-[#0A66C2]/40 text-sky-300 hover:text-white transition-all text-[11px] font-semibold"
-                title="Rayan Mirza LinkedIn Profile (@rynmirza)"
-              >
-                <Linkedin className="w-3 h-3 text-[#0A66C2]" />
-                <span>LinkedIn (@rynmirza)</span>
-              </a>
-              <a
-                href="https://github.com/rynzer0x"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-all text-[11px] font-semibold"
-                title="Rayan Mirza GitHub Profile (@rynzer0x)"
-              >
-                <Github className="w-3 h-3 text-slate-300" />
-                <span>GitHub (@rynzer0x)</span>
-              </a>
+              <span>Architected by <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 font-bold hover:underline transition-colors">Injazify Studios</a></span>
+              <div className="inline-flex items-center gap-1.5 ml-1">
+                <a
+                  href="https://github.com/rynzer0x"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all inline-flex items-center justify-center shadow-xs"
+                  title="GitHub"
+                  aria-label="GitHub Profile"
+                >
+                  <Github className="w-3.5 h-3.5" />
+                </a>
+                <a
+                  href="https://linkedin.com/in/rynmirza"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 rounded-lg bg-[#0A66C2]/20 hover:bg-[#0A66C2]/40 text-[#0A66C2] hover:text-white transition-all inline-flex items-center justify-center shadow-xs"
+                  title="LinkedIn"
+                  aria-label="LinkedIn Profile"
+                >
+                  <Linkedin className="w-3.5 h-3.5" />
+                </a>
+              </div>
             </div>
             <span className="text-slate-500">Earn Rewards. Flow Forward.</span>
           </div>
