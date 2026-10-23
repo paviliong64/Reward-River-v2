@@ -177,14 +177,6 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
 const handleLoginRequest = async (req: Request, res: Response) => {
   try {
     const ip = AdminFirewallService.getClientIp(req);
-    const { blocked, remainingMinutes } = AdminFirewallService.isIpBlocked(ip);
-    if (blocked) {
-      res.status(429).json({
-        error: `[FIREWALL LOCKED] Too many unauthorized requests. Blocked for ${remainingMinutes || 15} minutes.`,
-        firewallBlocked: true
-      });
-      return;
-    }
 
     const { email, password } = req.body || {};
     if (!email || !password) {
@@ -1843,34 +1835,46 @@ app.use((err: any, _req: Request, res: Response, _next: any) => {
 async function startServer() {
   await dbStore.init();
 
-  if (!isProduction) {
-    const { createServer: createViteServer } = await import('vite');
+  const isServerless = Boolean(
+    process.env.VERCEL ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    process.env.NOW_REGION
+  );
+
+  if (!isProduction && !isServerless) {
+    const vitePkg = 'vite';
+    const { createServer: createViteServer } = await import(/* @vite-ignore */ vitePkg);
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa'
     });
     app.use(vite.middlewares);
-  } else {
+  } else if (!isServerless) {
     const distPath = path.resolve(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*', (req, res) => {
+    app.get('*', (_req, res) => {
       res.sendFile(path.resolve(distPath, 'index.html'));
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`================================================================`);
-    console.log(` REWARD RIVER - ENTERPRISE MICRO-TASK & OFFERWALL PLATFORM      `);
-    console.log(` Architected by Injazify Studios by Rayan Mirza                `);
-    console.log(` Studio: https://injazify.com                                   `);
-    console.log(` Lead Architect GitHub: https://github.com/rynzer0x             `);
-    console.log(` Lead Architect LinkedIn: https://linkedin.com/in/rynmirza      `);
-    console.log(` Server running on http://0.0.0.0:${PORT} (${process.env.NODE_ENV || 'development'})`);
-    console.log(`================================================================`);
-  });
+  if (!isServerless) {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`================================================================`);
+      console.log(` REWARD RIVER - ENTERPRISE MICRO-TASK & OFFERWALL PLATFORM      `);
+      console.log(` Architected by Injazify Studios                                `);
+      console.log(` Server running on http://0.0.0.0:${PORT} (${process.env.NODE_ENV || 'development'})`);
+      console.log(`================================================================`);
+    });
+  }
 }
 
-if (!process.env.VERCEL) {
+const isServerlessRuntime = Boolean(
+  process.env.VERCEL ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.NOW_REGION
+);
+
+if (!isServerlessRuntime) {
   startServer().catch(err => {
     console.error('Fatal server startup error:', err);
     process.exit(1);

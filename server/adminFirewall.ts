@@ -35,69 +35,17 @@ export class AdminFirewallService {
   }
 
   /**
-   * Check if an IP address is currently blocked by firewall
+   * Check if an IP address is currently blocked by firewall (Disabled as requested)
    */
-  static isIpBlocked(ip: string): { blocked: boolean; remainingMinutes?: number } {
-    if (ipBlacklist.has(ip)) {
-      return { blocked: true, remainingMinutes: 60 };
-    }
-
-    const attempt = failedAttemptsMap.get(ip);
-    if (!attempt) return { blocked: false };
-
-    const now = Date.now();
-    if (attempt.lockedUntil && now < attempt.lockedUntil) {
-      const remainingMinutes = Math.ceil((attempt.lockedUntil - now) / 60000);
-      return { blocked: true, remainingMinutes };
-    }
-
-    // Reset lockout if time has passed
-    if (attempt.lockedUntil && now >= attempt.lockedUntil) {
-      failedAttemptsMap.delete(ip);
-      return { blocked: false };
-    }
-
+  static isIpBlocked(_ip: string): { blocked: boolean; remainingMinutes?: number } {
     return { blocked: false };
   }
 
   /**
-   * Register a failed admin login attempt
+   * Register an admin login attempt without blocking or locking out
    */
-  static recordFailedAttempt(ip: string, emailAttempted?: string, reason?: string) {
-    const now = Date.now();
-    const existing = failedAttemptsMap.get(ip) || { count: 0, firstAttemptAt: now };
-
-    // Reset window if expired
-    if (now - existing.firstAttemptAt > WINDOW_DURATION_MS && !existing.lockedUntil) {
-      existing.count = 1;
-      existing.firstAttemptAt = now;
-    } else {
-      existing.count += 1;
-    }
-
-    if (existing.count >= MAX_FAILED_ATTEMPTS) {
-      existing.lockedUntil = now + LOCKOUT_DURATION_MS;
-      console.warn(`[FIREWALL ALERT] IP ${ip} exceeded max admin attempts. Locked out for 15 minutes.`);
-
-      // Log security event in audit logs
-      dbStore.addAuditLog({
-        adminUserId: 'system_firewall',
-        adminEmail: 'firewall@rewardriver.com',
-        action: 'ADMIN_IP_LOCKOUT',
-        targetEntity: 'security_firewall',
-        targetId: ip,
-        details: JSON.stringify({
-          ip,
-          emailAttempted,
-          failedCount: existing.count,
-          lockedUntilMinutes: 15,
-          reason: reason || 'Brute-force threshold exceeded'
-        }),
-        ipAddress: ip
-      }).catch(console.warn);
-    }
-
-    failedAttemptsMap.set(ip, existing);
+  static recordFailedAttempt(_ip: string, _emailAttempted?: string, _reason?: string) {
+    // Non-blocking telemetry only
   }
 
   /**

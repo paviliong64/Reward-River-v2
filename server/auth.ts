@@ -150,15 +150,6 @@ import { AdminFirewallService } from './adminFirewall';
 
 export function requireAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const ip = AdminFirewallService.getClientIp(req);
-  const { blocked, remainingMinutes } = AdminFirewallService.isIpBlocked(ip);
-  if (blocked) {
-    res.status(429).json({
-      error: `[FIREWALL LOCKED] Too many unauthorized requests. Blocked for ${remainingMinutes || 15} minutes.`,
-      firewallBlocked: true
-    });
-    return;
-  }
-
   if (!req.user || (req.user.role !== 'admin' && req.user.email !== 'paviliong64@gmail.com')) {
     AdminFirewallService.recordFailedAttempt(ip, req.user?.email || 'unauthenticated', 'Unauthorized access attempt to admin endpoint');
     res.status(403).json({ error: 'Access forbidden. Administrator privileges required.' });
