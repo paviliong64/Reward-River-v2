@@ -54,7 +54,14 @@ import {
   Linkedin,
   Github,
   Star,
-  Bell
+  Bell,
+  Maximize2,
+  Minimize2,
+  ChevronRight,
+  ChevronLeft,
+  BookOpen,
+  HelpCircle,
+  Info
 } from 'lucide-react';
 
 interface AdminViewProps {
@@ -89,6 +96,19 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
   const [loading, setLoading] = useState(false);
   const [actionMessage, setActionMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Fullscreen, Category & Navigation States
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'financial' | 'monetization' | 'marketplace' | 'system'>('all');
+  const [showGuide, setShowGuide] = useState(true);
+  const tabsScrollRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollTabs = (direction: 'left' | 'right') => {
+    if (tabsScrollRef.current) {
+      const scrollAmount = direction === 'left' ? -280 : 280;
+      tabsScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   // User search & modals
   const [userSearchQuery, setUserSearchQuery] = useState('');
@@ -924,40 +944,307 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
     );
   }
 
+  const TAB_ITEMS = [
+    {
+      id: 'financials' as const,
+      category: 'financial' as const,
+      label: '60% Treasury & Financials',
+      shortLabel: 'Treasury (60%)',
+      icon: TrendingUp,
+      badge: financials?.platformProfitFormatted,
+      instructions: {
+        title: 'Platform Treasury & 60/40 Profit Architecture',
+        description: 'Real-time ledger recording the exact 60% gross margin automatically retained by Reward River on all surveys, offerwalls, micro-tasks, and ad monetization events.',
+        steps: [
+          'Audit the 5 executive KPI summary cards above for real-time gross network inflows, net cash retained, and member 40% payout disbursements.',
+          'Review each transaction in the Treasury Stream ledger below with exact timestamps, provider IDs, and gross vs 60% retained profit.',
+          'Financial math is enforced cryptographically before user balances are credited.'
+        ],
+        tip: 'All postbacks from CPX, Aoyco, and AdvertsReward credit 40% to the worker while 60% is retained in platform treasury.'
+      }
+    },
+    {
+      id: 'providers' as const,
+      category: 'monetization' as const,
+      label: `Integrate Providers & Partners (${providers.length})`,
+      shortLabel: `Partners (${providers.length})`,
+      icon: Globe,
+      badge: providers.filter(p => p.enabled).length ? `${providers.filter(p => p.enabled).length} Active` : undefined,
+      instructions: {
+        title: 'Direct Partner Streams & White-Label Gateways',
+        description: 'Connect direct survey and offerwall networks with full white-label Reward River branding.',
+        steps: [
+          'Click "+ Integrate New Partner Company" to configure a survey or offerwall network.',
+          'Set the Public White-Label Brand Name that workers will see (e.g. "Reward River Direct Gateway • Survey Stream Alpha").',
+          'Configure Launch URL template with macros: {app_id}, {external_id}, {ip}, {secret}.',
+          'Define the exact Member Share % (default 40%) and Reward River Profit % (default 60%).'
+        ],
+        tip: 'Always use {external_id} instead of plain user IDs so member emails remain confidential and shielded from third-party networks.'
+      }
+    },
+    {
+      id: 'ads' as const,
+      category: 'monetization' as const,
+      label: `Universal Ad Slots (${adSlots.length})`,
+      shortLabel: `Ad Slots (${adSlots.length})`,
+      icon: Code,
+      badge: adSlots.filter(s => s.enabled).length ? `${adSlots.filter(s => s.enabled).length} Live` : undefined,
+      instructions: {
+        title: 'Universal Ad Slot Management',
+        description: 'Monetize platform traffic across sticky bottom banners, sidebar rails, and task header ad slots.',
+        steps: [
+          'Inspect active ad slots: Sticky Bottom Desktop (728x90), Sticky Bottom Mobile (468x60), and Sidebar Rail (300x250).',
+          'Click "Edit Slot Code" to paste your HTML, script, or iframe ad tags from Adsterra, PropellerAds, or Google AdSense.',
+          'Toggle "Active / Disabled" to immediately publish or suppress banners across all web pages.'
+        ],
+        tip: 'Ad slots are rendered in sandboxed containers with lazy loading to preserve 95+ Google PageSpeed score.'
+      }
+    },
+    {
+      id: 'commissions' as const,
+      category: 'financial' as const,
+      label: 'Commissions & Margins (60/40)',
+      shortLabel: 'Commissions & Fees',
+      icon: Sliders,
+      instructions: {
+        title: 'Platform Margins, Limits & USDT Gas Fees',
+        description: 'Configure global monetary parameters, exchange rate pegs, and network fee deductions.',
+        steps: [
+          'Points Exchange Peg: Default 10,000 Points = $1.00 USD (recalculated in real-time).',
+          'USDT Minimum Withdrawal: Default $5.00 USDT (50,000 Points) to prevent blockchain fee depletion.',
+          'TRC-20 Fee: Flat $1.00 USDT deduction to cover TRON gas fees.',
+          'ERC-20 Fee: Flat $2.50 USDT deduction to cover Ethereum network gas fees.',
+          'Advertiser Platform Fee: Default 10% on sponsored micro-task campaign budgets.'
+        ],
+        tip: 'Click "Save System Commission Settings" at the bottom of the page to apply rate adjustments instantly.'
+      }
+    },
+    {
+      id: 'withdrawals' as const,
+      category: 'financial' as const,
+      label: `USDT Withdrawals (${withdrawals.filter(w => w.status === 'requested').length})`,
+      shortLabel: `Withdrawals (${withdrawals.filter(w => w.status === 'requested').length})`,
+      icon: DollarSign,
+      badge: withdrawals.filter(w => w.status === 'requested').length ? `${withdrawals.filter(w => w.status === 'requested').length} Pending` : undefined,
+      instructions: {
+        title: 'USDT Withdrawal Settlement & Processing',
+        description: 'Review and confirm member payout requests on TRON (TRC-20) and Ethereum (ERC-20).',
+        steps: [
+          'Inspect pending withdrawal cards: check member email, requested USDT amount, destination address, and fee.',
+          'Dispatch USDT from your wallet or exchange to the recipient address.',
+          'Click "Mark as Paid" and paste the confirmed Blockchain Transaction Hash (TXID) from TronScan or Etherscan.',
+          'If the request is fraudulent or the address is invalid, click "Reject & Refund" to return points to the user.'
+        ],
+        tip: 'TRC-20 addresses always start with "T" and take 1-3 minutes to confirm on TronScan.'
+      }
+    },
+    {
+      id: 'users' as const,
+      category: 'marketplace' as const,
+      label: `Users & Balance Control (${usersList.length})`,
+      shortLabel: `Users (${usersList.length})`,
+      icon: Users,
+      instructions: {
+        title: 'User Management & Balance Adjustment',
+        description: 'Search registered members, inspect individual earning history, and apply administrative balance adjustments.',
+        steps: [
+          'Use the Search bar to search by email address, user ID, or country.',
+          'Click "Inspect Details" to view complete ledger history, completed tasks, and withdrawal records.',
+          'Click "Adjust Balance" to add credit (bonus) or debit (chargeback/correction) with required audit log reason.'
+        ],
+        tip: 'Every balance modification is permanently recorded in the immutable Admin Audit Log with administrator email and IP.'
+      }
+    },
+    {
+      id: 'campaigns' as const,
+      category: 'marketplace' as const,
+      label: `Campaigns (${campaignsList.length})`,
+      shortLabel: `Campaigns (${campaignsList.length})`,
+      icon: Layers,
+      instructions: {
+        title: 'Advertiser Micro-Tasks Campaigns Management',
+        description: 'Oversee advertiser-sponsored micro-tasks running in the community marketplace.',
+        steps: [
+          'Review active campaigns, category (social, app, signup, survey), target budget, and completed slots.',
+          'Click "Pause Campaign" if a campaign target URL is non-functional or violates platform rules.',
+          'Click "Resume Campaign" to re-open remaining slots to the worker community.'
+        ],
+        tip: 'Advertiser reward budgets and 10% platform fees are locked upfront in escrow before campaigns go live.'
+      }
+    },
+    {
+      id: 'submissions' as const,
+      category: 'marketplace' as const,
+      label: `Proofs Queue (${submissionsList.filter(s => s.status === 'pending_review').length})`,
+      shortLabel: `Proofs (${submissionsList.filter(s => s.status === 'pending_review').length})`,
+      icon: CheckSquare,
+      badge: submissionsList.filter(s => s.status === 'pending_review').length ? `${submissionsList.filter(s => s.status === 'pending_review').length} Review` : undefined,
+      instructions: {
+        title: 'Worker Proof Verification & Reward Crediting',
+        description: 'Review submitted proof screenshots, reference IDs, and usernames from members completing marketplace tasks.',
+        steps: [
+          'Check the task instructions, member email, and submitted proof text.',
+          'If a screenshot proof was uploaded, click the image thumbnail to inspect the full-resolution screenshot.',
+          'Click "Approve Submission" to instantly credit the task points to the member wallet and update the campaign counter.',
+          'Click "Reject Submission" with a specific reason if the proof is duplicate, blank, or invalid.'
+        ],
+        tip: 'Fast proof approval within 1-2 hours boosts member engagement and daily task completion volume by 3x.'
+      }
+    },
+    {
+      id: 'reviews' as const,
+      category: 'marketplace' as const,
+      label: `⭐ Reviews Moderation (${adminReviews.filter(r => r.status === 'pending').length} Pending)`,
+      shortLabel: `Reviews (${adminReviews.filter(r => r.status === 'pending').length})`,
+      icon: Star,
+      badge: adminReviews.filter(r => r.status === 'pending').length ? `${adminReviews.filter(r => r.status === 'pending').length} Pending` : undefined,
+      instructions: {
+        title: 'Community Reviews & Payout Proof Moderation',
+        description: 'Approve, verify, and feature member testimonials and withdrawal payout receipts.',
+        steps: [
+          'Filter by "Pending", "Approved", or "Rejected" using the filter buttons above.',
+          'Verify the reviewer star rating (1-5), feedback comment, and claimed USDT withdrawal amount.',
+          'Click "Approve & Publish" to display the review on the public landing page with a "Verified USDT Payout" badge.',
+          'Click "Reject" or "Delete" to remove inappropriate feedback or spam submissions.'
+        ],
+        tip: 'Verified reviews with confirmed USDT withdrawal amounts increase landing page registration conversions by over 45%.'
+      }
+    },
+    {
+      id: 'announcements' as const,
+      category: 'marketplace' as const,
+      label: `📢 Announcements (${adminAnnouncements.length})`,
+      shortLabel: `Announcements (${adminAnnouncements.length})`,
+      icon: Bell,
+      instructions: {
+        title: 'Top Announcement Bar & Breaking News Broadcasts',
+        description: 'Manage breaking news, weekend promotions, and maintenance notices shown at the top of every page.',
+        steps: [
+          'Click "+ Create Announcement" to create a new notification banner.',
+          'Enter Title, Message, Badge (e.g. BONUS, UPDATE, ALERT), and target tab action link.',
+          'Click "Set as Top Bar" to make it the featured banner displayed above the navbar across the entire website.',
+          'Use the Pause / Play button to deactivate or reactivate announcements without deleting them.'
+        ],
+        tip: 'Keep announcement messages under 90 characters for optimal display on mobile screens.'
+      }
+    },
+    {
+      id: 'simulator' as const,
+      category: 'system' as const,
+      label: '1-Click Postback Simulator',
+      shortLabel: 'Simulator',
+      icon: Sparkles,
+      instructions: {
+        title: 'Live Offerwall Postback Webhook Simulator',
+        description: 'Test end-to-end webhook processing, user credit ledger updates, and 60/40 treasury split without third-party network accounts.',
+        steps: [
+          'Select the Direct Stream provider (CPX Research, Aoyco, or AdvertsReward).',
+          'Select the recipient member account from the dropdown list.',
+          'Enter the simulated Gross Provider Reward in USD cents (e.g., 200 cents = $2.00).',
+          'Click "Simulate Live Webhook" and verify that 40% ($0.80) is credited to the user and 60% ($1.20) is recorded in platform treasury.'
+        ],
+        tip: 'This simulator triggers the exact same internal cryptographic pipeline used by live incoming partner postbacks.'
+      }
+    },
+    {
+      id: 'security' as const,
+      category: 'system' as const,
+      label: '🛡️ Firewall & Credentials',
+      shortLabel: 'Firewall & Auth',
+      icon: ShieldAlert,
+      instructions: {
+        title: 'Hardware Firewall, IP Rate Limiter & Security Credentials',
+        description: 'Live intrusion detection stream, brute-force lockout rules, and master administrator credential management.',
+        steps: [
+          'Review the Live Firewall Audit Stream for real-time authentication events, IP addresses, and lockout warnings.',
+          'To update your master administrator password, enter your New Password and confirm with your Current Password.',
+          'Automatic Lockout Rule: 5 failed attempts within 15 minutes trigger an automated hardware IP ban for 60 minutes.',
+          'All administrative credentials use PBKDF2 SHA-512 hashing with 10,000 rounds and random salt.'
+        ],
+        tip: 'Never share your master administrator password. All administrative sessions are bound to your secure IP.'
+      }
+    }
+  ];
+
+  const activeTabDef = TAB_ITEMS.find(t => t.id === activeSubTab) || TAB_ITEMS[0];
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div
+      className={
+        isFullScreen
+          ? 'fixed inset-0 z-50 bg-slate-900 text-slate-100 overflow-y-auto p-4 sm:p-8 space-y-6 flex flex-col shadow-2xl pb-24'
+          : 'max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-6 space-y-6 pb-20'
+      }
+    >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200/80">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <ShieldCheck className="w-7 h-7 text-sky-600" />
-            <span>Reward River Master Control</span>
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-900 text-white">
-              Super Admin
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className={`text-2xl font-black tracking-tight flex items-center gap-2 ${isFullScreen ? 'text-white' : 'text-slate-900'}`}>
+              <ShieldCheck className="w-7 h-7 text-sky-500" />
+              <span>Reward River Master Control</span>
+            </h2>
+            <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-slate-900 text-cyan-300 border border-slate-700">
+              SUPER ADMIN
             </span>
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
+            {isFullScreen && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800">
+                ⛶ FULLSCREEN COCKPIT ACTIVE
+              </span>
+            )}
+          </div>
+          <p className={`text-xs mt-1 ${isFullScreen ? 'text-slate-400' : 'text-slate-500'}`}>
             Complete executive portal: 60% Treasury Revenue, Direct Provider Integrations, Universal Ad Manager, 40% User Payouts & Commission Controls.
-            <span className="ml-2 font-semibold text-sky-600 inline-flex items-center gap-1.5 flex-wrap">
-              • Built by <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="hover:underline">Injazify Studios</a>
-              <a href="https://github.com/rynzer0x" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-slate-900 inline-flex items-center" title="GitHub" aria-label="GitHub Profile">
+            <span className="ml-2 font-semibold text-sky-500 inline-flex items-center gap-1.5 flex-wrap">
+              • Built by <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="hover:underline text-cyan-400">Injazify Studios</a>
+              <a href="https://github.com/rynzer0x" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white inline-flex items-center" title="GitHub" aria-label="GitHub Profile">
                 <Github className="w-3.5 h-3.5" />
               </a>
-              <a href="https://linkedin.com/in/rynmirza" target="_blank" rel="noopener noreferrer" className="text-[#0A66C2] hover:underline inline-flex items-center" title="LinkedIn" aria-label="LinkedIn Profile">
+              <a href="https://linkedin.com/in/rynmirza" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-white inline-flex items-center" title="LinkedIn" aria-label="LinkedIn Profile">
                 <Linkedin className="w-3.5 h-3.5" />
               </a>
             </span>
           </p>
         </div>
 
-        <button
-          onClick={fetchAdminData}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-700 shadow-sm transition shrink-0"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          <span>Refresh All</span>
-        </button>
+        <div className="flex items-center gap-2 flex-wrap shrink-0">
+          {/* Fullscreen Cockpit Mode Toggle */}
+          <button
+            onClick={() => setIsFullScreen(!isFullScreen)}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-xs ${
+              isFullScreen
+                ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-950'
+                : 'bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-800'
+            }`}
+            title={isFullScreen ? 'Exit Fullscreen Cockpit' : 'Switch to Fullscreen Cockpit'}
+          >
+            {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            <span>{isFullScreen ? 'Exit Fullscreen' : 'Fullscreen Cockpit'}</span>
+          </button>
+
+          {/* Operational Guide Toggle */}
+          <button
+            onClick={() => setShowGuide(!showGuide)}
+            className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-xs font-bold transition ${
+              showGuide
+                ? 'bg-sky-50 border-sky-300 text-sky-700'
+                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+            }`}
+            title="Toggle Section Instructions & Operational Guide"
+          >
+            <BookOpen className="w-4 h-4 text-sky-600" />
+            <span>{showGuide ? 'Guide: On' : 'Guide: Off'}</span>
+          </button>
+
+          <button
+            onClick={fetchAdminData}
+            disabled={loading}
+            className="flex items-center gap-2 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-700 shadow-xs transition"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
       {actionMessage && (
@@ -988,7 +1275,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
             </span>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs text-slate-900">
             <span className="text-[11px] text-slate-500 font-semibold block">Total Gross Network Inflow</span>
             <span className="text-2xl font-black text-slate-900 block mt-1">
               {financials.grossInflowFormatted}
@@ -998,7 +1285,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
             </span>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs text-slate-900">
             <span className="text-[11px] text-slate-500 font-semibold block">40% User Payouts Disbursed</span>
             <span className="text-2xl font-black text-sky-600 block mt-1">
               {financials.userDisbursedFormatted}
@@ -1008,7 +1295,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
             </span>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs text-slate-900">
             <span className="text-[11px] text-slate-500 font-semibold block">Pending Withdrawals Queue</span>
             <span className="text-2xl font-black text-amber-600 block mt-1">
               {financials.pendingWithdrawalsFormatted}
@@ -1018,7 +1305,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
             </span>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs text-slate-900">
             <span className="text-[11px] text-slate-500 font-semibold block">Net Retained Cash</span>
             <span className="text-2xl font-black text-indigo-600 block mt-1">
               {financials.netRetainedFormatted}
@@ -1030,152 +1317,207 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
         </div>
       )}
 
-      {/* Navigation Sub-Tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-200 scrollbar-none">
-        <button
-          onClick={() => setActiveSubTab('financials')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-            activeSubTab === 'financials'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <TrendingUp className="w-3.5 h-3.5" />
-          <span>60% Treasury & Financials</span>
-        </button>
+      {/* Modern Operational Navigation & Category Controls */}
+      <div className={`rounded-2xl border p-3 sm:p-4 shadow-xs space-y-3 ${
+        isFullScreen ? 'bg-slate-800/80 border-slate-700 text-slate-200' : 'bg-white border-slate-200/90 text-slate-800'
+      }`}>
+        {/* Category Pills & Mobile Jump Select */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            <span className={`text-[11px] font-bold uppercase tracking-wider mr-1 shrink-0 ${
+              isFullScreen ? 'text-slate-400' : 'text-slate-400'
+            }`}>
+              Operations:
+            </span>
+            {[
+              { id: 'all' as const, label: 'All Operations (12)' },
+              { id: 'financial' as const, label: '💰 Financials & Payouts (3)' },
+              { id: 'monetization' as const, label: '🌐 Partner Streams & Ads (2)' },
+              { id: 'marketplace' as const, label: '📋 Tasks & Community (4)' },
+              { id: 'system' as const, label: '🛡️ Tools & Security (2)' }
+            ].map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setCategoryFilter(cat.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                  categoryFilter === cat.id
+                    ? 'bg-sky-600 text-white shadow-xs'
+                    : isFullScreen
+                    ? 'bg-slate-900 text-slate-300 hover:bg-slate-700'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
 
-        <button
-          onClick={() => setActiveSubTab('providers')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-            activeSubTab === 'providers'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Globe className="w-3.5 h-3.5" />
-          <span>Integrate Providers & Partners ({providers.length})</span>
-        </button>
+          {/* Quick Dropdown Selector */}
+          <div className="flex items-center gap-2 shrink-0">
+            <label className={`text-[11px] font-bold whitespace-nowrap hidden sm:inline ${
+              isFullScreen ? 'text-slate-400' : 'text-slate-500'
+            }`}>
+              Jump Directly:
+            </label>
+            <select
+              value={activeSubTab}
+              onChange={e => setActiveSubTab(e.target.value as any)}
+              className={`w-full sm:w-auto px-3 py-1.5 rounded-xl text-xs font-bold border focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer ${
+                isFullScreen
+                  ? 'bg-slate-900 border-slate-700 text-white'
+                  : 'bg-slate-50 border-slate-200 text-slate-800'
+              }`}
+            >
+              <optgroup label="Financial Operations">
+                <option value="financials">60% Treasury & Financials</option>
+                <option value="commissions">Commissions & Margins (60/40)</option>
+                <option value="withdrawals">USDT Withdrawals ({withdrawals.filter(w => w.status === 'requested').length} Pending)</option>
+              </optgroup>
+              <optgroup label="Monetization & Ads">
+                <option value="providers">Integrate Providers & Partners ({providers.length})</option>
+                <option value="ads">Universal Ad Slots ({adSlots.length})</option>
+              </optgroup>
+              <optgroup label="Marketplace & Community">
+                <option value="submissions">Proofs Queue ({submissionsList.filter(s => s.status === 'pending_review').length} Pending)</option>
+                <option value="campaigns">Micro-Tasks & Campaigns ({campaignsList.length})</option>
+                <option value="users">Users & Balance Control ({usersList.length})</option>
+                <option value="reviews">Reviews Moderation ({adminReviews.filter(r => r.status === 'pending').length} Pending)</option>
+                <option value="announcements">Announcements Manager ({adminAnnouncements.length})</option>
+              </optgroup>
+              <optgroup label="System Tools & Security">
+                <option value="simulator">1-Click Postback Simulator</option>
+                <option value="security">Firewall & Security Shield</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
 
-        <button
-          onClick={() => setActiveSubTab('ads')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-            activeSubTab === 'ads'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Code className="w-3.5 h-3.5" />
-          <span>Universal Ad Slots ({adSlots.length})</span>
-        </button>
+        {/* Scrollable Sub-Tabs with Navigation Arrows */}
+        <div className={`relative flex items-center pt-1 border-t ${
+          isFullScreen ? 'border-slate-700' : 'border-slate-100'
+        }`}>
+          <button
+            onClick={() => scrollTabs('left')}
+            className={`p-2 rounded-xl transition shrink-0 mr-1.5 shadow-xs cursor-pointer ${
+              isFullScreen ? 'bg-slate-900 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+            }`}
+            title="Scroll Tabs Left"
+            aria-label="Scroll Tabs Left"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
 
-        <button
-          onClick={() => setActiveSubTab('commissions')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-            activeSubTab === 'commissions'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Sliders className="w-3.5 h-3.5" />
-          <span>Commissions & Margins (60/40)</span>
-        </button>
+          <div
+            ref={tabsScrollRef}
+            className="flex items-center gap-2 overflow-x-auto py-1 scroll-smooth scrollbar-thin scrollbar-thumb-slate-300 flex-1"
+          >
+            {TAB_ITEMS
+              .filter(item => categoryFilter === 'all' || item.category === categoryFilter)
+              .map(item => {
+                const Icon = item.icon;
+                const isActive = activeSubTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveSubTab(item.id)}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-2 shrink-0 cursor-pointer ${
+                      isActive
+                        ? item.id === 'security'
+                          ? 'bg-rose-950 text-rose-300 border border-rose-800 shadow-sm'
+                          : isFullScreen
+                          ? 'bg-cyan-500 text-slate-950 shadow-sm'
+                          : 'bg-slate-900 text-white shadow-sm'
+                        : item.id === 'security'
+                        ? 'text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200'
+                        : isFullScreen
+                        ? 'text-slate-300 bg-slate-900/90 hover:bg-slate-700 border border-slate-700'
+                        : 'text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200/80'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <span>{item.label}</span>
+                    {item.badge !== undefined && (
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
+                          isActive
+                            ? isFullScreen ? 'bg-slate-900/40 text-slate-950 font-bold' : 'bg-white/20 text-white'
+                            : 'bg-slate-200 text-slate-800 font-bold'
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+          </div>
 
-        <button
-          onClick={() => setActiveSubTab('withdrawals')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-            activeSubTab === 'withdrawals'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <DollarSign className="w-3.5 h-3.5" />
-          <span>USDT Withdrawals ({withdrawals.filter(w => w.status === 'requested').length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSubTab('users')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-            activeSubTab === 'users'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Users className="w-3.5 h-3.5" />
-          <span>Users & Balance Control ({usersList.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSubTab('campaigns')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-            activeSubTab === 'campaigns'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Layers className="w-3.5 h-3.5" />
-          <span>Campaigns ({campaignsList.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSubTab('submissions')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-            activeSubTab === 'submissions'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <CheckSquare className="w-3.5 h-3.5" />
-          <span>Proofs Queue ({submissionsList.filter(s => s.status === 'pending_review').length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSubTab('reviews')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-            activeSubTab === 'reviews'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-          <span>⭐ Reviews Moderation ({adminReviews.filter(r => r.status === 'pending').length} Pending)</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSubTab('announcements')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-            activeSubTab === 'announcements'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Bell className="w-3.5 h-3.5 text-sky-400" />
-          <span>📢 Announcements ({adminAnnouncements.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSubTab('simulator')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-            activeSubTab === 'simulator'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>1-Click Postback Simulator</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSubTab('security')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-            activeSubTab === 'security'
-              ? 'bg-rose-950 text-rose-300 border border-rose-800 shadow-sm'
-              : 'text-rose-700 bg-rose-50/70 hover:bg-rose-100/80 border border-rose-200/60'
-          }`}
-        >
-          <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
-          <span>🛡️ Firewall & Credentials</span>
-        </button>
+          <button
+            onClick={() => scrollTabs('right')}
+            className={`p-2 rounded-xl transition shrink-0 ml-1.5 shadow-xs cursor-pointer ${
+              isFullScreen ? 'bg-slate-900 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+            }`}
+            title="Scroll Tabs Right"
+            aria-label="Scroll Tabs Right"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
+
+      {/* Operational Instructions & Workflow Guide Banner for Active Tab */}
+      {showGuide && activeTabDef && (
+        <div className="bg-gradient-to-r from-sky-50 via-indigo-50/40 to-white border border-sky-200/90 rounded-2xl p-4 sm:p-5 shadow-xs animate-in fade-in text-slate-800">
+          <div className="flex items-start justify-between gap-4 mb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-sky-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="font-extrabold text-slate-900 text-sm">
+                    {activeTabDef.instructions.title}
+                  </h4>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 border border-sky-200">
+                    OPERATIONAL INSTRUCTIONS
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                  {activeTabDef.instructions.description}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowGuide(false)}
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition shrink-0"
+              title="Dismiss Guide"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-3 border-t border-sky-100 text-xs">
+            {activeTabDef.instructions.steps.map((step, idx) => (
+              <div key={idx} className="flex items-start gap-2 bg-white/90 p-2.5 rounded-xl border border-sky-100/90 shadow-2xs">
+                <span className="w-5 h-5 rounded-full bg-sky-600 text-white font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                  {idx + 1}
+                </span>
+                <span className="text-slate-700 leading-snug">{step}</span>
+              </div>
+            ))}
+          </div>
+
+          {activeTabDef.instructions.tip && (
+            <div className="mt-2.5 p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-[11px] text-amber-900 flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span>
+                <strong>Administrator Pro-Tip:</strong> {activeTabDef.instructions.tip}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* TAB 1: 60% TREASURY & FINANCIALS */}
       {activeSubTab === 'financials' && (
@@ -1775,51 +2117,65 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {campaignsList.map(c => (
-                  <tr key={c.id} className="hover:bg-slate-50 transition">
-                    <td className="py-3 px-3">
-                      <span className="font-bold text-slate-900 block">{c.title}</span>
-                      <span className="text-[10px] text-slate-400">{c.advertiserEmail}</span>
-                    </td>
-                    <td className="py-3 px-3 capitalize text-slate-600">{c.category}</td>
-                    <td className="py-3 px-3 font-mono font-bold text-sky-600">
-                      {c.rewardPoints.toLocaleString()} Pts (${(c.rewardCents / 100).toFixed(2)})
-                    </td>
-                    <td className="py-3 px-3 font-mono">
-                      {c.completedSlots} / {c.totalSlots}
-                    </td>
-                    <td className="py-3 px-3">
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          c.status === 'active'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : c.status === 'completed'
-                            ? 'bg-slate-100 text-slate-800'
-                            : 'bg-amber-100 text-amber-800'
-                        }`}
-                      >
-                        {c.status.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3 text-right">
-                      {c.status === 'pending_approval' ? (
-                        <button
-                          onClick={() => handleCampaignAction(c.id, 'approve')}
-                          className="px-2.5 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold"
-                        >
-                          Approve
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleCampaignAction(c.id, c.status === 'active' ? 'pause' : 'resume')}
-                          className="px-2.5 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-bold"
-                        >
-                          {c.status === 'active' ? 'Pause' : 'Resume'}
-                        </button>
-                      )}
+                {campaignsList.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-slate-400">
+                      <div className="max-w-sm mx-auto space-y-2">
+                        <Layers className="w-8 h-8 mx-auto text-slate-300" />
+                        <p className="font-bold text-slate-700 text-xs">No Advertiser Micro-Tasks Active</p>
+                        <p className="text-[11px] text-slate-400">
+                          When advertisers submit sponsored community tasks, they will appear here for operational review and management.
+                        </p>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  campaignsList.map(c => (
+                    <tr key={c.id} className="hover:bg-slate-50 transition">
+                      <td className="py-3 px-3">
+                        <span className="font-bold text-slate-900 block">{c.title}</span>
+                        <span className="text-[10px] text-slate-400">{c.advertiserEmail}</span>
+                      </td>
+                      <td className="py-3 px-3 capitalize text-slate-600">{c.category}</td>
+                      <td className="py-3 px-3 font-mono font-bold text-sky-600">
+                        {c.rewardPoints.toLocaleString()} Pts (${(c.rewardCents / 100).toFixed(2)})
+                      </td>
+                      <td className="py-3 px-3 font-mono">
+                        {c.completedSlots} / {c.totalSlots}
+                      </td>
+                      <td className="py-3 px-3">
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            c.status === 'active'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : c.status === 'completed'
+                              ? 'bg-slate-100 text-slate-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {c.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        {c.status === 'pending_approval' ? (
+                          <button
+                            onClick={() => handleCampaignAction(c.id, 'approve')}
+                            className="px-2.5 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold"
+                          >
+                            Approve
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleCampaignAction(c.id, c.status === 'active' ? 'pause' : 'resume')}
+                            className="px-2.5 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-bold"
+                          >
+                            {c.status === 'active' ? 'Pause' : 'Resume'}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -1830,56 +2186,85 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
       {activeSubTab === 'submissions' && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-900">Member Proof Submissions Queue</h3>
-            <span className="text-xs text-slate-400">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <CheckSquare className="w-5 h-5 text-sky-600" />
+              <span>Member Proof Submissions Queue</span>
+            </h3>
+            <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 font-bold text-slate-600">
               {submissionsList.filter(s => s.status === 'pending_review').length} Pending Review
             </span>
           </div>
 
           <div className="space-y-3">
-            {submissionsList.map(sub => (
-              <div key={sub.id} className="border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <div>
-                  <h4 className="font-bold text-slate-900 text-sm">{sub.taskTitle}</h4>
-                  <p className="text-xs text-slate-500">Member: {sub.workerEmail} • {new Date(sub.submittedAt).toLocaleString()}</p>
-                  {sub.proofText && (
-                    <p className="text-xs text-slate-700 bg-slate-50 p-2 rounded-lg mt-2 font-mono">{sub.proofText}</p>
-                  )}
-                  {sub.proofScreenshotUrl && (
-                    <button
-                      onClick={() => setPreviewImage(sub.proofScreenshotUrl!)}
-                      className="mt-2 text-xs text-sky-600 font-bold underline flex items-center gap-1"
-                    >
-                      <Eye className="w-3.5 h-3.5" /> View Submitted Screenshot
-                    </button>
-                  )}
+            {submissionsList.length === 0 ? (
+              <div className="p-8 sm:p-12 text-center bg-slate-50 border border-dashed border-slate-200 rounded-2xl space-y-3">
+                <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                  <CheckCircle2 className="w-6 h-6" />
                 </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="font-mono font-bold text-sky-600 text-xs mr-2">
-                    +{sub.rewardPoints.toLocaleString()} Pts
-                  </span>
-                  {sub.status === 'pending_review' ? (
-                    <>
-                      <button
-                        onClick={() => handleSubmissionAction(sub.id, 'approved')}
-                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => handleSubmissionAction(sub.id, 'rejected', 'Invalid proof provided')}
-                        className="px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-bold"
-                      >
-                        Reject
-                      </button>
-                    </>
-                  ) : (
-                    <span className="text-xs font-bold text-slate-400 uppercase">{sub.status}</span>
-                  )}
+                <h4 className="font-bold text-slate-800 text-sm">All Member Proofs Moderated & Clear!</h4>
+                <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                  When community members complete advertiser micro-tasks and submit proof screenshots, reference IDs, or usernames, verification requests stream directly into this queue for 1-click approval or rejection.
+                </p>
+                <div className="flex items-center justify-center gap-2.5 pt-2 flex-wrap">
+                  <button
+                    onClick={() => setActiveSubTab('campaigns')}
+                    className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+                  >
+                    View Active Micro-Tasks ({campaignsList.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveSubTab('simulator')}
+                    className="px-4 py-2 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer"
+                  >
+                    Simulate Test Postback
+                  </button>
                 </div>
               </div>
-            ))}
+            ) : (
+              submissionsList.map(sub => (
+                <div key={sub.id} className="border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-sm">{sub.taskTitle}</h4>
+                    <p className="text-xs text-slate-500">Member: {sub.workerEmail} • {new Date(sub.submittedAt).toLocaleString()}</p>
+                    {sub.proofText && (
+                      <p className="text-xs text-slate-700 bg-slate-50 p-2 rounded-lg mt-2 font-mono">{sub.proofText}</p>
+                    )}
+                    {sub.proofScreenshotUrl && (
+                      <button
+                        onClick={() => setPreviewImage(sub.proofScreenshotUrl!)}
+                        className="mt-2 text-xs text-sky-600 font-bold underline flex items-center gap-1"
+                      >
+                        <Eye className="w-3.5 h-3.5" /> View Submitted Screenshot
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="font-mono font-bold text-sky-600 text-xs mr-2">
+                      +{sub.rewardPoints.toLocaleString()} Pts
+                    </span>
+                    {sub.status === 'pending_review' ? (
+                      <>
+                        <button
+                          onClick={() => handleSubmissionAction(sub.id, 'approved')}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleSubmissionAction(sub.id, 'rejected', 'Invalid proof provided')}
+                          className="px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-bold"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-xs font-bold text-slate-400 uppercase">{sub.status}</span>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
@@ -1984,7 +2369,13 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
                     Reward River Defense Shield v2.0
                   </span>
                   <span className="text-xs text-slate-400 inline-flex items-center gap-1.5 flex-wrap">
-                    By <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="hover:underline text-slate-300 font-semibold">Injazify Studios</a> by <a href="https://linkedin.com/in/rynmirza" target="_blank" rel="noopener noreferrer" className="hover:underline text-sky-400 font-semibold inline-flex items-center gap-1"><Linkedin className="w-3 h-3 text-[#0A66C2]" />Rayan Mirza (@rynmirza)</a>
+                    • Built by <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="hover:underline text-slate-300 font-semibold">Injazify Studios</a>
+                    <a href="https://github.com/rynzer0x" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white inline-flex items-center" title="GitHub" aria-label="GitHub Profile">
+                      <Github className="w-3.5 h-3.5" />
+                    </a>
+                    <a href="https://linkedin.com/in/rynmirza" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-white inline-flex items-center" title="LinkedIn" aria-label="LinkedIn Profile">
+                      <Linkedin className="w-3.5 h-3.5" />
+                    </a>
                   </span>
                 </div>
                 <h3 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
@@ -2424,9 +2815,37 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
 
           {/* Announcements List */}
           <div className="space-y-3">
-            {adminAnnouncements.map(ann => (
-              <div
-                key={ann.id}
+            {adminAnnouncements.length === 0 ? (
+              <div className="p-8 sm:p-12 text-center bg-slate-50 border border-dashed border-slate-200 rounded-2xl space-y-3">
+                <div className="w-12 h-12 mx-auto rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
+                  <Bell className="w-6 h-6" />
+                </div>
+                <h4 className="font-bold text-slate-800 text-sm">No Announcements Created Yet</h4>
+                <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                  Broadcast breaking updates, weekend bonus rewards, or maintenance notices across the entire platform with a high-visibility top notification bar.
+                </p>
+                <button
+                  onClick={() =>
+                    setAnnouncementModal({
+                      title: 'Weekend 20% Bonus Rewards Active!',
+                      message: 'Earn 20% bonus points on all Direct Streams this weekend.',
+                      badge: 'BONUS',
+                      type: 'success',
+                      linkText: 'Earn Now',
+                      linkTab: 'streams',
+                      showInTopBar: true,
+                      active: true
+                    })
+                  }
+                  className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+                >
+                  Create Your First Announcement
+                </button>
+              </div>
+            ) : (
+              adminAnnouncements.map(ann => (
+                <div
+                  key={ann.id}
                 className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4"
               >
                 <div className="space-y-1.5 flex-1 min-w-0">
@@ -2499,7 +2918,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
                   </button>
                 </div>
               </div>
-            ))}
+            )))}
           </div>
         </div>
       )}
@@ -3028,6 +3447,41 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
           </div>
         </div>
       )}
+
+      {/* Executive Command Center Operational Status Bar */}
+      <div className={`mt-8 pt-4 pb-2 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
+        isFullScreen ? 'border-slate-800 text-slate-400' : 'border-slate-200 text-slate-500'
+      }`}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`font-bold tracking-tight flex items-center gap-1.5 ${isFullScreen ? 'text-white' : 'text-slate-900'}`}>
+            <ShieldCheck className="w-4 h-4 text-sky-500" />
+            <span>Reward River Master Control v2.0</span>
+          </span>
+          <span className="text-[11px]">• Built by <a href="https://injazify.com" target="_blank" rel="noopener noreferrer" className="hover:underline text-cyan-500 font-semibold">Injazify Studios</a></span>
+          <a href="https://github.com/rynzer0x" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white inline-flex items-center" title="GitHub" aria-label="GitHub Profile">
+            <Github className="w-3.5 h-3.5" />
+          </a>
+          <a href="https://linkedin.com/in/rynmirza" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-white inline-flex items-center" title="LinkedIn" aria-label="LinkedIn Profile">
+            <Linkedin className="w-3.5 h-3.5" />
+          </a>
+        </div>
+
+        <div className="flex items-center gap-3 text-[11px] flex-wrap">
+          <span className="flex items-center gap-1 text-emerald-500 font-semibold">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Telemetry Online
+          </span>
+          <span>•</span>
+          <span>Active View: <strong className="text-sky-500">{activeTabDef.shortLabel}</strong></span>
+          <span>•</span>
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="hover:underline text-slate-400 hover:text-slate-600 font-bold cursor-pointer"
+          >
+            ↑ Back to Top
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

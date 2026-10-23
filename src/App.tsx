@@ -753,14 +753,16 @@ export default function App() {
         )}
       </main>
 
-      {/* Sandboxed Sticky Banner & Rail Ads */}
-      <AdBanners adSettings={adSettings} />
+      {/* Sandboxed Sticky Banner & Rail Ads (Hidden on Admin Command Center) */}
+      {currentTab !== 'admin' && <AdBanners adSettings={adSettings} />}
 
-      {/* Footer */}
-      <Footer
-        onOpenLegal={(page) => setLegalModalPage(page)}
-        onSelectTab={setCurrentTab}
-      />
+      {/* Footer (Hidden on Admin Command Center to give full operational workspace) */}
+      {currentTab !== 'admin' && (
+        <Footer
+          onOpenLegal={(page) => setLegalModalPage(page)}
+          onSelectTab={setCurrentTab}
+        />
+      )}
 
       {/* Auth Modal */}
       <AuthModal
