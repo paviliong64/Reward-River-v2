@@ -18,8 +18,16 @@ export function hashPassword(password: string): { hash: string; salt: string } {
 }
 
 export function verifyPassword(password: string, hash: string, salt: string): boolean {
-  const checkHash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
-  return crypto.timingSafeEqual(Buffer.from(checkHash, 'hex'), Buffer.from(hash, 'hex'));
+  if (!password || !hash || !salt) return false;
+  try {
+    const checkHash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+    const bufCheck = Buffer.from(checkHash, 'hex');
+    const bufHash = Buffer.from(hash, 'hex');
+    if (bufCheck.length !== bufHash.length) return false;
+    return crypto.timingSafeEqual(bufCheck, bufHash);
+  } catch {
+    return false;
+  }
 }
 
 export function createSessionToken(user: UserAccount): string {

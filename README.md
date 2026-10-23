@@ -4,8 +4,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL_17-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
 [![Vercel](https://img.shields.io/badge/Deploy-Vercel_Ready-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
-[![GitHub Partner](https://img.shields.io/badge/Partner-Rayan_Mirza_(@rynzer0x)-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/rynzer0x)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Rayan_Mirza_(@rynmirza)-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/rynmirza)
+[![Injazify Studios](https://img.shields.io/badge/Injazify_Studios-00D2FF?style=for-the-badge&logo=safari&logoColor=black)](https://injazify.com)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/rynzer0x)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/rynmirza)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![USDT](https://img.shields.io/badge/Settlement-USDT_(TRC20_%2F_ERC20)-26A17B?style=for-the-badge&logo=tether&logoColor=white)](https://tether.to)
 
@@ -17,16 +18,11 @@
 
 This platform is architected, co-founded, and governed under permanent joint partnership:
 
-* 🚀 **Injazify Studios**: [www.injazify.com](https://injazify.com)
-  * *Official Development Studio, Digital Infrastructure & Enterprise Platform Engineering*
-* 👑 **Rayan Mirza** ([@rynzer0x](https://github.com/rynzer0x)):
-  * 🐙 **GitHub Partner Profile**: [github.com/rynzer0x](https://github.com/rynzer0x) (`@rynzer0x`)
-  * 💼 **Official LinkedIn**: [linkedin.com/in/rynmirza](https://linkedin.com/in/rynmirza) (`@rynmirza`)
-  * 🌐 **Studio**: [Injazify Studios](https://injazify.com)
-  * *Lead Systems Architect, Co-Founder, Executive Partner & Full Repository Maintainer*
-* 💡 **Tahir Sanaullah** ([@paviliong64](https://github.com/paviliong64)):
-  * 🐙 **GitHub Profile**: [github.com/paviliong64](https://github.com/paviliong64) (`@paviliong64`)
-  * *Product Architect, Co-Founder & Deployment Partner*
+| Partner / Architect | Role & Organization | Verified Portals |
+| :--- | :--- | :--- |
+| **Injazify Studios** | Enterprise Digital Infrastructure & Engineering | [![Website](https://img.shields.io/badge/Official_Website-00D2FF?style=flat-square&logo=safari&logoColor=black)](https://injazify.com) |
+| **Rayan Mirza** | Lead Systems Architect & Co-Founder | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/rynzer0x) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/rynmirza) [![Studio](https://img.shields.io/badge/Injazify_Studios-0284c7?style=flat-square&logo=google-chrome&logoColor=white)](https://injazify.com) |
+| **Tahir Sanaullah** | Product Architect & Deployment Partner | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/paviliong64) |
 
 ---
 
@@ -267,8 +263,8 @@ This project is licensed under the terms of the **MIT License**. See the [`LICEN
 Copyright (c) 2026 Reward River Platform Core. All rights reserved.
 Architected, Engineered & Maintained by:
 - Injazify Studios (https://injazify.com)
-- Rayan Mirza (https://github.com/rynzer0x | https://linkedin.com/in/rynmirza)
-- paviliong64 / Tahir Sanaullah (https://github.com/paviliong64)
+- Rayan Mirza (Lead Systems Architect & Co-Founder)
+- Tahir Sanaullah (Product Architect & Co-Founder)
 ```
 
-> **Immutable Attribution Clause:** All derivative works, production deployments, and commercial instances of Reward River must preserve full copyright authorship and attribution to **Injazify Studios**, **Rayan Mirza ([@rynzer0x](https://github.com/rynzer0x))**, and **paviliong64**.
+> **Immutable Attribution Clause:** All derivative works, production deployments, and commercial instances of Reward River must preserve full copyright authorship and attribution to **Injazify Studios**, **Rayan Mirza** ([GitHub](https://github.com/rynzer0x) • [LinkedIn](https://linkedin.com/in/rynmirza)), and **Tahir Sanaullah** ([GitHub](https://github.com/paviliong64)).

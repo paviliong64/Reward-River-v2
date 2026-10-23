@@ -250,6 +250,10 @@ class DatabaseStore {
   private initialized = false;
   private writeQueue: Promise<void> = Promise.resolve();
 
+  public isInitialized(): boolean {
+    return this.initialized;
+  }
+
   constructor() {
     this.data = this.getDefaultData();
   }
