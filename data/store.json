@@ -117,12 +117,50 @@
       "emailVerified": true,
       "role": "user",
       "externalOpaqueId": "opaque_1792716192248",
-      "createdAt": "2026-10-23T00:43:12.248Z",
-      "updatedAt": "2026-10-23T00:43:13.913Z",
+      "phoneNumber": null,
+      "whatsappNumber": null,
+      "countryCode": "US",
+      "provider": "supabase",
+      "advertiserBalanceCents": 780,
+      "hasPromptedPhone": false,
+      "createdAt": "2026-10-23T00:43:11.368555+00:00",
+      "updatedAt": "2026-10-23T00:43:13.915+00:00"
+    },
+    {
+      "id": "usr_1792718323051",
+      "email": "worker_test_1792718323051@rewardriver.com",
+      "passwordHash": "dummy_hash",
+      "salt": "dummy_salt",
+      "displayName": "Test Supabase Worker",
+      "emailVerified": true,
+      "role": "user",
+      "externalOpaqueId": "opaque_1792718323051",
+      "createdAt": "2026-10-23T01:18:43.051Z",
+      "updatedAt": "2026-10-23T01:18:44.755Z",
       "advertiserBalanceCents": 780
     }
   ],
   "rewardLedger": [
+    {
+      "id": "ledg_2b0985a8-d0a0-46c3-8c88-b07feb7db8aa",
+      "userId": "usr_1792716192248",
+      "providerTxId": "task_task_1e8f4373-e593-4368-b914-312c6257a858_sub_db02a801-54dd-4503-8ed7-07986cb59d5e",
+      "amountCents": 10,
+      "entryType": "credit",
+      "status": "confirmed",
+      "description": "Completed Task: \"Visit Reward River Telegram & Join Community\" (1,000 Points)",
+      "createdAt": "2026-10-23T00:43:14.728+00:00"
+    },
+    {
+      "id": "ledg_1792716192841",
+      "userId": "usr_1792716192248",
+      "providerTxId": "tx_1792716192841",
+      "amountCents": 80,
+      "entryType": "credit",
+      "status": "confirmed",
+      "description": "Direct Survey Reward (8,000 Points)",
+      "createdAt": "2026-10-23T00:43:12.841+00:00"
+    },
     {
       "id": "ledg_7346733b-8fd5-4b5e-b4ac-b9d33ec1f76b",
       "userId": "usr_1792713098170",
@@ -244,26 +282,26 @@
       "createdAt": "2026-10-22T22:12:13.501+00:00"
     },
     {
-      "id": "ledg_1792716192841",
-      "userId": "usr_1792716192248",
-      "providerTxId": "tx_1792716192841",
+      "id": "ledg_1792718323700",
+      "userId": "usr_1792718323051",
+      "providerTxId": "tx_1792718323700",
       "amountCents": 80,
       "entryType": "credit",
       "status": "confirmed",
       "description": "Direct Survey Reward (8,000 Points)",
-      "createdAt": "2026-10-23T00:43:12.841Z",
-      "processedAt": "2026-10-23T00:43:12.841Z"
+      "createdAt": "2026-10-23T01:18:43.700Z",
+      "processedAt": "2026-10-23T01:18:43.700Z"
     },
     {
-      "id": "ledg_2b0985a8-d0a0-46c3-8c88-b07feb7db8aa",
-      "userId": "usr_1792716192248",
-      "providerTxId": "task_task_1e8f4373-e593-4368-b914-312c6257a858_sub_db02a801-54dd-4503-8ed7-07986cb59d5e",
+      "id": "ledg_7b86bd09-c56b-4365-8ec2-c2e76f8aa263",
+      "userId": "usr_1792718323051",
+      "providerTxId": "task_task_7e1535a2-1f6c-4581-a97a-7fd35ea9d8f1_sub_73d740ce-f9db-449d-8ca6-cab8fc929ee3",
       "amountCents": 10,
       "entryType": "credit",
       "status": "confirmed",
       "description": "Completed Task: \"Visit Reward River Telegram & Join Community\" (1,000 Points)",
-      "createdAt": "2026-10-23T00:43:14.728Z",
-      "processedAt": "2026-10-23T00:43:14.728Z"
+      "createdAt": "2026-10-23T01:18:45.623Z",
+      "processedAt": "2026-10-23T01:18:45.623Z"
     }
   ],
   "tasks": [
@@ -413,8 +451,37 @@
       "updatedAt": "2026-10-22T23:51:40.964+00:00"
     },
     {
+      "id": "task_1e8f4373-e593-4368-b914-312c6257a858",
       "advertiserId": "usr_1792716192248",
       "advertiserEmail": "worker_test_1792716192248@rewardriver.com",
+      "title": "Visit Reward River Telegram & Join Community",
+      "description": "Join our official Telegram announcement channel and submit username proof.",
+      "instructions": [
+        "1. Open link",
+        "2. Click Join",
+        "3. Submit handle"
+      ],
+      "category": "social",
+      "targetUrl": "https://t.me/rewardriver",
+      "rewardPoints": 1000,
+      "rewardCents": 10,
+      "totalSlots": 20,
+      "completedSlots": 1,
+      "targetCountry": "ALL",
+      "targetDevice": "all",
+      "requiredProofType": "text",
+      "proofInstructions": "Enter your Telegram username",
+      "status": "active",
+      "platformFeePercent": 10,
+      "advertiserBudgetReservedCents": 200,
+      "advertiserFeeReservedCents": 20,
+      "adminNotes": null,
+      "createdAt": "2026-10-23T00:43:13.288049+00:00",
+      "updatedAt": "2026-10-23T00:43:15.006+00:00"
+    },
+    {
+      "advertiserId": "usr_1792718323051",
+      "advertiserEmail": "worker_test_1792718323051@rewardriver.com",
       "title": "Visit Reward River Telegram & Join Community",
       "description": "Join our official Telegram announcement channel and submit username proof.",
       "instructions": [
@@ -435,10 +502,10 @@
       "platformFeePercent": 10,
       "advertiserBudgetReservedCents": 200,
       "advertiserFeeReservedCents": 20,
-      "id": "task_1e8f4373-e593-4368-b914-312c6257a858",
+      "id": "task_7e1535a2-1f6c-4581-a97a-7fd35ea9d8f1",
       "completedSlots": 1,
-      "createdAt": "2026-10-23T00:43:13.913Z",
-      "updatedAt": "2026-10-23T00:43:15.006Z"
+      "createdAt": "2026-10-23T01:18:44.754Z",
+      "updatedAt": "2026-10-23T01:18:45.919Z"
     }
   ],
   "taskSubmissions": [
@@ -486,6 +553,21 @@
       "submittedAt": "2026-10-23T00:43:14.469Z",
       "reviewedAt": "2026-10-23T00:43:15.290Z",
       "reviewedBy": "admin_sys"
+    },
+    {
+      "id": "sub_73d740ce-f9db-449d-8ca6-cab8fc929ee3",
+      "taskId": "task_7e1535a2-1f6c-4581-a97a-7fd35ea9d8f1",
+      "taskTitle": "Visit Reward River Telegram & Join Community",
+      "workerId": "usr_1792718323051",
+      "workerEmail": "worker_test_1792718323051@rewardriver.com",
+      "advertiserId": "usr_1792718323051",
+      "rewardPoints": 1000,
+      "rewardCents": 10,
+      "proofText": "@reward_river_tester",
+      "status": "approved",
+      "submittedAt": "2026-10-23T01:18:45.345Z",
+      "reviewedAt": "2026-10-23T01:18:46.195Z",
+      "reviewedBy": "admin_sys"
     }
   ],
   "advertiserDeposits": [
@@ -524,6 +606,18 @@
       "txHashOrRef": "ref_4a7bca3f2e049f5b",
       "createdAt": "2026-10-23T00:43:13.329Z",
       "confirmedAt": "2026-10-23T00:43:13.329Z"
+    },
+    {
+      "id": "dep_8a2cb049-8881-40e0-8f93-b6d6e0f7fb08",
+      "advertiserId": "usr_1792718323051",
+      "advertiserEmail": "worker_test_1792718323051@rewardriver.com",
+      "amountCents": 1000,
+      "amountPoints": 100000,
+      "method": "usdt_trc20",
+      "status": "completed",
+      "txHashOrRef": "ref_437492cf94069128",
+      "createdAt": "2026-10-23T01:18:44.166Z",
+      "confirmedAt": "2026-10-23T01:18:44.166Z"
     }
   ],
   "adSettings": {
@@ -544,7 +638,7 @@
       "format": "728x90",
       "enabled": true,
       "adCode": "<div class=\"rr-custom-sponsor\">Reward River Sponsor Ad 2026</div>",
-      "updatedAt": "2026-10-23T00:43:15.559Z"
+      "updatedAt": "2026-10-23T01:18:46.471Z"
     }
   ],
   "offerwallSettings": {
@@ -620,6 +714,20 @@
     }
   ],
   "platformTreasury": [
+    {
+      "id": "pt_6a233b9f-30da-4998-8364-6a4420bd1526",
+      "providerId": "cpx",
+      "providerName": "Reward River Direct Gateway • Survey Stream Alpha",
+      "sourceType": "survey",
+      "grossAmountCents": 200,
+      "userShareCents": 80,
+      "platformShareCents": 120,
+      "userId": "usr_1792716192248",
+      "userEmail": "worker_test_1792716192248@rewardriver.com",
+      "providerTxId": "tx_1792716192555",
+      "description": "Verified Direct Survey Completion",
+      "createdAt": "2026-10-23T00:43:12.557+00:00"
+    },
     {
       "id": "pt_18177891-f94b-4cbb-bee9-9bcb16be6151",
       "providerId": "cpx",
@@ -725,12 +833,12 @@
       "grossAmountCents": 200,
       "userShareCents": 80,
       "platformShareCents": 120,
-      "userId": "usr_1792716192248",
-      "userEmail": "worker_test_1792716192248@rewardriver.com",
-      "providerTxId": "tx_1792716192555",
+      "userId": "usr_1792718323051",
+      "userEmail": "worker_test_1792718323051@rewardriver.com",
+      "providerTxId": "tx_1792718323398",
       "description": "Verified Direct Survey Completion",
-      "id": "pt_6a233b9f-30da-4998-8364-6a4420bd1526",
-      "createdAt": "2026-10-23T00:43:12.557Z"
+      "id": "pt_e6435584-7507-43a4-a9c2-0734de7dcc08",
+      "createdAt": "2026-10-23T01:18:43.399Z"
     }
   ],
   "withdrawalRequests": [],
@@ -781,6 +889,105 @@
       "ipAddress": "::ffff:127.0.0.1",
       "id": "log_92589ad7-96d2-4b0f-8f20-6c0b84d39925",
       "createdAt": "2026-10-23T00:32:17.177Z"
+    }
+  ],
+  "reviews": [
+    {
+      "id": "rev_david_01",
+      "userName": "David Miller",
+      "userCountry": "US",
+      "rating": 5,
+      "title": "Fastest USDT Payout Platform I have ever used!",
+      "comment": "Withdrew $25.00 USDT via TRC-20 and received it in my Trust Wallet within minutes. CPX surveys and app installs credit accurately without deductions.",
+      "payoutProofUsdt": 25,
+      "payoutProofTx": "0x94f1c...81a2e",
+      "status": "approved",
+      "autoApproved": true,
+      "createdAt": "2026-10-21T01:18:41.300Z",
+      "approvedAt": "2026-10-21T01:18:41.300Z"
+    },
+    {
+      "id": "rev_sarah_02",
+      "userName": "Sarah Jenkins",
+      "userCountry": "GB",
+      "rating": 5,
+      "title": "Legit tasks and clean white-labeled experience",
+      "comment": "The YouTube and social media micro-tasks took under 2 minutes each. Direct streams are high-yield and payout fees are completely transparent.",
+      "payoutProofUsdt": 50,
+      "payoutProofTx": "0x32b90...4f89d",
+      "status": "approved",
+      "autoApproved": true,
+      "createdAt": "2026-10-19T01:18:41.300Z",
+      "approvedAt": "2026-10-19T01:18:41.300Z"
+    },
+    {
+      "id": "rev_farhan_03",
+      "userName": "Farhan K.",
+      "userCountry": "PK",
+      "rating": 5,
+      "title": "Best reward site for crypto earnings in 2026",
+      "comment": "Already cashed out twice to Binance TRC-20 wallet. The 10,000 Points = $1.00 peg makes tracking easy. Zero hidden deductions.",
+      "payoutProofUsdt": 15,
+      "payoutProofTx": "0x17d84...29ce7",
+      "status": "approved",
+      "autoApproved": true,
+      "createdAt": "2026-10-17T01:18:41.300Z",
+      "approvedAt": "2026-10-17T01:18:41.300Z"
+    },
+    {
+      "id": "rev_elena_04",
+      "userName": "Elena Rostova",
+      "userCountry": "DE",
+      "rating": 5,
+      "title": "Instant verification & responsive admin support",
+      "comment": "Completed two app installs and a survey stream. Approved and credited to my balance seamlessly. Highly recommend to everyone.",
+      "payoutProofUsdt": 30,
+      "payoutProofTx": "0x7e29a...55c1b",
+      "status": "approved",
+      "autoApproved": true,
+      "createdAt": "2026-10-15T01:18:41.300Z",
+      "approvedAt": "2026-10-15T01:18:41.300Z"
+    }
+  ],
+  "announcements": [
+    {
+      "id": "ann_instant_payout_01",
+      "title": "⚡ Instant USDT Settlement Online",
+      "message": "TRON (TRC-20) withdrawals are processed with zero delay and a flat $1.00 network fee. Cash out anytime from $5.00!",
+      "badge": "WITHDRAWAL",
+      "type": "bonus",
+      "linkText": "Withdraw USDT",
+      "linkTab": "withdraw",
+      "showInTopBar": true,
+      "active": true,
+      "createdAt": "2026-10-23T01:18:41.301Z",
+      "updatedAt": "2026-10-23T01:18:41.301Z"
+    },
+    {
+      "id": "ann_weekend_bonus_02",
+      "title": "🎉 20% Weekend Bonus Active",
+      "message": "Complete any Direct Stream or Task this weekend to receive an additional 20% bonus points credited to your ledger!",
+      "badge": "BONUS",
+      "type": "info",
+      "linkText": "Explore Tasks",
+      "linkTab": "tasks",
+      "showInTopBar": false,
+      "active": true,
+      "createdAt": "2026-10-23T01:18:41.301Z",
+      "updatedAt": "2026-10-23T01:18:41.301Z"
+    },
+    {
+      "id": "ann_tasks_update_03",
+      "title": "🚀 Direct Gateway Streams Upgraded",
+      "message": "New high-yield survey streams and verified social campaigns have been added to the micro-tasks marketplace.",
+      "badge": "UPDATE",
+      "type": "info",
+      "linkText": "View Streams",
+      "linkTab": "surveys",
+      "showInTopBar": false,
+      "active": true,
+      "createdAt": "2026-10-23T01:18:41.301Z",
+      "updatedAt": "2026-10-23T01:18:41.301Z"
     }
   ]
 }

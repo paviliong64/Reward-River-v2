@@ -29,7 +29,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -350,20 +350,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             )}
 
             {mode === 'signup' && (
-              <div className="pt-1">
-                <label className="flex items-start gap-2 cursor-pointer select-none">
+              <div className={`p-2.5 rounded-xl border transition-all ${!acceptTerms && error?.includes('Terms') ? 'bg-rose-50 border-rose-300 ring-2 ring-rose-200' : 'bg-slate-50 border-slate-200 hover:bg-slate-100/70'}`}>
+                <label className="flex items-start gap-2.5 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={acceptTerms}
                     onChange={(e) => setAcceptTerms(e.target.checked)}
-                    className="mt-0.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                    className="mt-0.5 w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
                   />
-                  <span className="text-xs text-slate-600">
+                  <span className="text-xs text-slate-700 leading-snug">
                     I agree to the{' '}
                     <button
                       type="button"
                       onClick={() => onOpenLegal('terms')}
-                      className="text-sky-600 hover:underline font-semibold"
+                      className="text-sky-600 hover:underline font-bold"
                     >
                       Terms of Service
                     </button>{' '}
@@ -371,7 +371,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <button
                       type="button"
                       onClick={() => onOpenLegal('privacy')}
-                      className="text-sky-600 hover:underline font-semibold"
+                      className="text-sky-600 hover:underline font-bold"
                     >
                       Privacy Policy
                     </button>

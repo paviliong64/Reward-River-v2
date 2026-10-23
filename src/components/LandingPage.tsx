@@ -20,18 +20,23 @@ import {
   Zap
 } from 'lucide-react';
 
+import { ReviewsSection } from './ReviewsSection';
+import { User } from '../types';
+
 interface LandingPageProps {
   usdtQuote: UsdtQuote | null;
   onGetStarted: () => void;
   onOpenLegal: (page: string) => void;
   onSelectRoleSignup?: (role: 'user' | 'advertiser') => void;
+  currentUser?: User | null;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
   usdtQuote,
   onGetStarted,
   onOpenLegal,
-  onSelectRoleSignup
+  onSelectRoleSignup,
+  currentUser
 }) => {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [metrics, setMetrics] = useState<PublicMetrics>({
@@ -378,6 +383,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
         </div>
       </section>
+
+      {/* Verified Reviews Section */}
+      <ReviewsSection currentUser={currentUser} onOpenAuth={onGetStarted} />
 
       {/* FAQ Section */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">

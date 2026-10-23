@@ -1674,6 +1674,161 @@ app.get('/api/public/ads', (req: Request, res: Response) => {
   });
 });
 
+// -----------------------------------------------------------------------------
+// Reviews & Testimonials Endpoints
+// -----------------------------------------------------------------------------
+
+// GET /api/public/reviews - Fetch approved reviews for public landing & dashboard
+app.get('/api/public/reviews', (_req: Request, res: Response) => {
+  const reviews = dbStore.getReviews('approved');
+  const avgRating = reviews.length > 0
+    ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
+    : '5.0';
+  res.json({
+    reviews,
+    totalCount: reviews.length,
+    averageRating: parseFloat(avgRating)
+  });
+});
+
+// POST /api/reviews/submit - Submit a user review
+app.post('/api/reviews/submit', async (req: Request, res: Response) => {
+  try {
+    const { userName, rating, title, comment, payoutProofUsdt, payoutProofTx, userCountry } = req.body || {};
+
+    if (!userName || !comment || !rating) {
+      res.status(400).json({ error: 'Please provide your name, rating, and feedback comment.' });
+      return;
+    }
+
+    const numRating = Math.min(Math.max(Number(rating) || 5, 1), 5);
+    const autoApprove = numRating >= 4;
+
+    const newReview = await dbStore.addReview({
+      userName: String(userName).trim().slice(0, 50),
+      userCountry: userCountry || 'US',
+      rating: numRating,
+      title: title ? String(title).trim().slice(0, 100) : 'Verified Earner Review',
+      comment: String(comment).trim().slice(0, 1000),
+      payoutProofUsdt: payoutProofUsdt ? Number(payoutProofUsdt) : undefined,
+      payoutProofTx: payoutProofTx ? String(payoutProofTx).trim() : undefined,
+      status: autoApprove ? 'approved' : 'pending',
+      autoApproved: autoApprove
+    });
+
+    res.status(201).json({
+      success: true,
+      message: autoApprove ? 'Your review has been published!' : 'Review submitted for verification.',
+      review: newReview
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || 'Failed to submit review' });
+  }
+});
+
+// GET /api/admin/reviews - Admin fetch all reviews with pending count
+app.get('/api/admin/reviews', requireAdmin, (_req: Request, res: Response) => {
+  const allReviews = dbStore.getReviews('all');
+  res.json({
+    reviews: allReviews,
+    pendingCount: allReviews.filter(r => r.status === 'pending').length,
+    approvedCount: allReviews.filter(r => r.status === 'approved').length
+  });
+});
+
+// POST /api/admin/reviews/:id/status - Admin approve or reject review
+app.post('/api/admin/reviews/:id/status', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    if (!['approved', 'rejected'].includes(status)) {
+      res.status(400).json({ error: 'Status must be approved or rejected' });
+      return;
+    }
+    const updated = await dbStore.updateReviewStatus(id, status);
+    res.json({ success: true, review: updated });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || 'Failed to update review status' });
+  }
+});
+
+// DELETE /api/admin/reviews/:id - Admin delete review
+app.delete('/api/admin/reviews/:id', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const success = await dbStore.deleteReview(id);
+    res.json({ success });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || 'Failed to delete review' });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// Announcements & Notification Bar Endpoints
+// -----------------------------------------------------------------------------
+
+// GET /api/public/announcements - Fetch active announcements & top bar
+app.get('/api/public/announcements', (_req: Request, res: Response) => {
+  const activeList = dbStore.getAnnouncements(true);
+  const topBar = dbStore.getTopAnnouncement();
+  res.json({
+    announcements: activeList,
+    topBarAnnouncement: topBar || activeList[0] || null
+  });
+});
+
+// GET /api/admin/announcements - Admin fetch all announcements
+app.get('/api/admin/announcements', requireAdmin, (_req: Request, res: Response) => {
+  const all = dbStore.getAnnouncements(false);
+  res.json({ announcements: all });
+});
+
+// POST /api/admin/announcements - Create announcement
+app.post('/api/admin/announcements', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { title, message, badge, type, linkText, linkTab, showInTopBar, active } = req.body;
+    if (!title || !message) {
+      res.status(400).json({ error: 'Title and message are required' });
+      return;
+    }
+    const created = await dbStore.createAnnouncement({
+      title: String(title).trim(),
+      message: String(message).trim(),
+      badge: badge || 'UPDATE',
+      type: type || 'info',
+      linkText: linkText || undefined,
+      linkTab: linkTab || undefined,
+      showInTopBar: Boolean(showInTopBar),
+      active: active !== undefined ? Boolean(active) : true
+    });
+    res.status(201).json({ success: true, announcement: created });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || 'Failed to create announcement' });
+  }
+});
+
+// PUT /api/admin/announcements/:id - Update announcement
+app.put('/api/admin/announcements/:id', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const updated = await dbStore.updateAnnouncement(id, req.body);
+    res.json({ success: true, announcement: updated });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || 'Failed to update announcement' });
+  }
+});
+
+// DELETE /api/admin/announcements/:id - Delete announcement
+app.delete('/api/admin/announcements/:id', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const success = await dbStore.deleteAnnouncement(id);
+    res.json({ success });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || 'Failed to delete announcement' });
+  }
+});
+
 // Global error handler ensuring all errors are JSON formatted (never unparsed HTML)
 app.use((err: any, _req: Request, res: Response, _next: any) => {
   console.error('[Unhandled Server Error]', err);

@@ -3,6 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { LedgerEntry, WithdrawalRecord, calculateUserBalances, isDuplicateTransaction } from '../src/utils/ledger';
 import { supabaseStore } from './supabaseStore';
+import { PlatformReview, PlatformAnnouncement } from '../src/types';
 
 export interface UserAccount {
   id: string;
@@ -240,10 +241,18 @@ export interface DatabaseSchema {
   withdrawalEvents: WithdrawalEvent[];
   systemSettings: SystemSettings;
   adminAuditLogs: AdminAuditLog[];
+  reviews: PlatformReview[];
+  announcements: PlatformAnnouncement[];
 }
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
-const DB_FILE = path.resolve(DATA_DIR, 'store.json');
+const isServerless = Boolean(
+  process.env.VERCEL ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.NOW_REGION
+);
+
+const DATA_DIR = isServerless ? '/tmp' : path.resolve(process.cwd(), 'data');
+const DB_FILE = isServerless ? path.resolve('/tmp', 'store.json') : path.resolve(DATA_DIR, 'store.json');
 
 class DatabaseStore {
   private data: DatabaseSchema;
@@ -399,7 +408,138 @@ class DatabaseStore {
         defaultNetwork: 'TRC20',
         updatedAt: '2026-10-20T00:00:00.000Z'
       },
-      adminAuditLogs: []
+      adminAuditLogs: [],
+      reviews: [
+        {
+          id: 'rev_david_01',
+          userName: 'David Miller',
+          userCountry: 'US',
+          rating: 5,
+          title: 'Fastest USDT Payout Platform I have ever used!',
+          comment: 'Withdrew $25.00 USDT via TRC-20 and received it in my Trust Wallet within minutes. CPX surveys and app installs credit accurately without deductions.',
+          payoutProofUsdt: 25.00,
+          payoutProofTx: '0x94f1c...81a2e',
+          status: 'approved',
+          autoApproved: true,
+          createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+          approvedAt: new Date(Date.now() - 86400000 * 2).toISOString()
+        },
+        {
+          id: 'rev_sarah_02',
+          userName: 'Sarah Jenkins',
+          userCountry: 'GB',
+          rating: 5,
+          title: 'Legit tasks and clean white-labeled experience',
+          comment: 'The YouTube and social media micro-tasks took under 2 minutes each. Direct streams are high-yield and payout fees are completely transparent.',
+          payoutProofUsdt: 50.00,
+          payoutProofTx: '0x32b90...4f89d',
+          status: 'approved',
+          autoApproved: true,
+          createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
+          approvedAt: new Date(Date.now() - 86400000 * 4).toISOString()
+        },
+        {
+          id: 'rev_farhan_03',
+          userName: 'Farhan K.',
+          userCountry: 'PK',
+          rating: 5,
+          title: 'Best reward site for crypto earnings in 2026',
+          comment: 'Already cashed out twice to Binance TRC-20 wallet. The 10,000 Points = $1.00 peg makes tracking easy. Zero hidden deductions.',
+          payoutProofUsdt: 15.00,
+          payoutProofTx: '0x17d84...29ce7',
+          status: 'approved',
+          autoApproved: true,
+          createdAt: new Date(Date.now() - 86400000 * 6).toISOString(),
+          approvedAt: new Date(Date.now() - 86400000 * 6).toISOString()
+        },
+        {
+          id: 'rev_elena_04',
+          userName: 'Elena Rostova',
+          userCountry: 'DE',
+          rating: 5,
+          title: 'Instant verification & responsive admin support',
+          comment: 'Completed two app installs and a survey stream. Approved and credited to my balance seamlessly. Highly recommend to everyone.',
+          payoutProofUsdt: 30.00,
+          payoutProofTx: '0x7e29a...55c1b',
+          status: 'approved',
+          autoApproved: true,
+          createdAt: new Date(Date.now() - 86400000 * 8).toISOString(),
+          approvedAt: new Date(Date.now() - 86400000 * 8).toISOString()
+        }
+      ],
+      announcements: [
+        {
+          id: 'ann_instant_payout_01',
+          title: '⚡ Instant USDT Settlement Online',
+          message: 'TRON (TRC-20) withdrawals are processed with zero delay and a flat $1.00 network fee. Cash out anytime from $5.00!',
+          badge: 'WITHDRAWAL',
+          type: 'bonus',
+          linkText: 'Withdraw USDT',
+          linkTab: 'withdraw',
+          showInTopBar: true,
+          active: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'ann_weekend_bonus_02',
+          title: '🎉 20% Weekend Bonus Active',
+          message: 'Complete any Direct Stream or Task this weekend to receive an additional 20% bonus points credited to your ledger!',
+          badge: 'BONUS',
+          type: 'info',
+          linkText: 'Explore Tasks',
+          linkTab: 'tasks',
+          showInTopBar: false,
+          active: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'ann_tasks_update_03',
+          title: '🚀 Direct Gateway Streams Upgraded',
+          message: 'New high-yield survey streams and verified social campaigns have been added to the micro-tasks marketplace.',
+          badge: 'UPDATE',
+          type: 'info',
+          linkText: 'View Streams',
+          linkTab: 'surveys',
+          showInTopBar: false,
+          active: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+    };
+  }
+
+  private applyParsedData(parsed: any) {
+    this.data = {
+      ...this.getDefaultData(),
+      ...parsed,
+      users: parsed.users || [],
+      rewardLedger: parsed.rewardLedger || [],
+      tasks: parsed.tasks || [],
+      taskSubmissions: parsed.taskSubmissions || [],
+      advertiserDeposits: parsed.advertiserDeposits || [],
+      adSettings: {
+        ...this.getDefaultData().adSettings,
+        ...(parsed.adSettings || {})
+      },
+      adSlots: (parsed.adSlots && parsed.adSlots.length > 0) ? parsed.adSlots : this.getDefaultData().adSlots,
+      offerwallSettings: {
+        ...this.getDefaultData().offerwallSettings,
+        ...(parsed.offerwallSettings || {})
+      },
+      providers: (parsed.providers && parsed.providers.length > 0) ? parsed.providers : this.getDefaultData().providers,
+      platformTreasury: parsed.platformTreasury || [],
+      withdrawalRequests: parsed.withdrawalRequests || [],
+      withdrawalEvents: parsed.withdrawalEvents || [],
+      systemSettings: {
+        ...this.getDefaultData().systemSettings,
+        ...(parsed.systemSettings || {})
+      },
+      adminAuditLogs: parsed.adminAuditLogs || [],
+      reviews: (parsed.reviews && parsed.reviews.length > 0) ? parsed.reviews : this.getDefaultData().reviews,
+      announcements: (parsed.announcements && parsed.announcements.length > 0) ? parsed.announcements : this.getDefaultData().announcements
     };
   }
 
@@ -407,39 +547,31 @@ class DatabaseStore {
     if (this.initialized) return;
 
     try {
-      await fs.mkdir(DATA_DIR, { recursive: true });
+      if (!isServerless) {
+        await fs.mkdir(DATA_DIR, { recursive: true }).catch(() => {});
+      }
+
+      let loaded = false;
       try {
         const fileContent = await fs.readFile(DB_FILE, 'utf-8');
         const parsed = JSON.parse(fileContent);
-        this.data = {
-          ...this.getDefaultData(),
-          ...parsed,
-          users: parsed.users || [],
-          rewardLedger: parsed.rewardLedger || [],
-          tasks: parsed.tasks || [],
-          taskSubmissions: parsed.taskSubmissions || [],
-          advertiserDeposits: parsed.advertiserDeposits || [],
-          adSettings: {
-            ...this.getDefaultData().adSettings,
-            ...(parsed.adSettings || {})
-          },
-          adSlots: (parsed.adSlots && parsed.adSlots.length > 0) ? parsed.adSlots : this.getDefaultData().adSlots,
-          offerwallSettings: {
-            ...this.getDefaultData().offerwallSettings,
-            ...(parsed.offerwallSettings || {})
-          },
-          providers: (parsed.providers && parsed.providers.length > 0) ? parsed.providers : this.getDefaultData().providers,
-          platformTreasury: parsed.platformTreasury || [],
-          withdrawalRequests: parsed.withdrawalRequests || [],
-          withdrawalEvents: parsed.withdrawalEvents || [],
-          systemSettings: {
-            ...this.getDefaultData().systemSettings,
-            ...(parsed.systemSettings || {})
-          },
-          adminAuditLogs: parsed.adminAuditLogs || []
-        };
+        this.applyParsedData(parsed);
+        loaded = true;
       } catch {
-        // File doesn't exist yet, save default
+        // In serverless, try bundled data/store.json if /tmp is not yet initialized
+        if (isServerless) {
+          try {
+            const bundledPath = path.resolve(process.cwd(), 'data', 'store.json');
+            const fileContent = await fs.readFile(bundledPath, 'utf-8');
+            const parsed = JSON.parse(fileContent);
+            this.applyParsedData(parsed);
+            loaded = true;
+          } catch {}
+        }
+      }
+
+      if (!loaded) {
+        // Save default initial store
         await this.persist();
       }
 
@@ -672,8 +804,15 @@ class DatabaseStore {
 
   private persist(): Promise<void> {
     this.writeQueue = this.writeQueue.then(async () => {
-      const content = JSON.stringify(this.data, null, 2);
-      await fs.writeFile(DB_FILE, content, 'utf-8');
+      try {
+        const content = JSON.stringify(this.data, null, 2);
+        if (!isServerless) {
+          await fs.mkdir(DATA_DIR, { recursive: true }).catch(() => {});
+        }
+        await fs.writeFile(DB_FILE, content, 'utf-8');
+      } catch (err) {
+        console.warn('[DatabaseStore] Non-fatal persistence write warning:', err);
+      }
     });
     return this.writeQueue;
   }
@@ -1439,8 +1578,90 @@ class DatabaseStore {
       targetId: userId,
       details: JSON.stringify({ amountCents, description, userEmail: user.email })
     });
+  }
 
-    return entry;
+  // --- Reviews ---
+  getReviews(filter: 'all' | 'approved' | 'pending' | 'rejected' = 'approved'): PlatformReview[] {
+    const list = this.data.reviews || [];
+    if (filter === 'all') return [...list];
+    return list.filter(r => r.status === filter);
+  }
+
+  async addReview(reviewData: Omit<PlatformReview, 'id' | 'createdAt'>): Promise<PlatformReview> {
+    if (!this.data.reviews) this.data.reviews = [];
+    const newReview: PlatformReview = {
+      ...reviewData,
+      id: `rev_${crypto.randomUUID()}`,
+      createdAt: new Date().toISOString(),
+      status: reviewData.status || 'pending',
+      approvedAt: reviewData.status === 'approved' ? new Date().toISOString() : undefined
+    };
+    this.data.reviews.unshift(newReview);
+    await this.persist();
+    return newReview;
+  }
+
+  async updateReviewStatus(id: string, status: 'approved' | 'rejected'): Promise<PlatformReview> {
+    const rev = (this.data.reviews || []).find(r => r.id === id);
+    if (!rev) throw new Error('Review not found');
+    rev.status = status;
+    if (status === 'approved') rev.approvedAt = new Date().toISOString();
+    await this.persist();
+    return rev;
+  }
+
+  async deleteReview(id: string): Promise<boolean> {
+    const idx = (this.data.reviews || []).findIndex(r => r.id === id);
+    if (idx === -1) return false;
+    this.data.reviews.splice(idx, 1);
+    await this.persist();
+    return true;
+  }
+
+  // --- Announcements ---
+  getAnnouncements(activeOnly: boolean = false): PlatformAnnouncement[] {
+    const list = this.data.announcements || [];
+    if (activeOnly) return list.filter(a => a.active);
+    return [...list];
+  }
+
+  getTopAnnouncement(): PlatformAnnouncement | undefined {
+    return (this.data.announcements || []).find(a => a.active && a.showInTopBar);
+  }
+
+  async createAnnouncement(annData: Omit<PlatformAnnouncement, 'id' | 'createdAt' | 'updatedAt'>): Promise<PlatformAnnouncement> {
+    if (!this.data.announcements) this.data.announcements = [];
+    const newAnn: PlatformAnnouncement = {
+      ...annData,
+      id: `ann_${crypto.randomUUID()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    if (newAnn.showInTopBar) {
+      this.data.announcements.forEach(a => { if (a.id !== newAnn.id) a.showInTopBar = false; });
+    }
+    this.data.announcements.unshift(newAnn);
+    await this.persist();
+    return newAnn;
+  }
+
+  async updateAnnouncement(id: string, updates: Partial<PlatformAnnouncement>): Promise<PlatformAnnouncement> {
+    const ann = (this.data.announcements || []).find(a => a.id === id);
+    if (!ann) throw new Error('Announcement not found');
+    if (updates.showInTopBar) {
+      this.data.announcements.forEach(a => { if (a.id !== id) a.showInTopBar = false; });
+    }
+    Object.assign(ann, updates, { updatedAt: new Date().toISOString() });
+    await this.persist();
+    return ann;
+  }
+
+  async deleteAnnouncement(id: string): Promise<boolean> {
+    const idx = (this.data.announcements || []).findIndex(a => a.id === id);
+    if (idx === -1) return false;
+    this.data.announcements.splice(idx, 1);
+    await this.persist();
+    return true;
   }
 
   getPublicMetrics() {

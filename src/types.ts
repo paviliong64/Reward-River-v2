@@ -282,3 +282,36 @@ export interface CpxConfigStatus {
   mode: 'live' | 'demo';
 }
 
+export interface PlatformReview {
+  id: string;
+  userId?: string;
+  userEmail?: string;
+  userName: string;
+  userAvatar?: string;
+  userCountry?: string;
+  rating: number; // 1 to 5
+  title: string;
+  comment: string;
+  payoutProofUsdt?: number; // e.g. 25.00
+  payoutProofTx?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  autoApproved?: boolean;
+  createdAt: string;
+  approvedAt?: string;
+}
+
+export interface PlatformAnnouncement {
+  id: string;
+  title: string;
+  message: string;
+  linkText?: string;
+  linkTab?: string; // e.g. 'tasks', 'surveys', 'withdraw'
+  badge?: string; // e.g. 'BONUS', 'UPDATE', 'USDT', 'ALERT'
+  type: 'info' | 'bonus' | 'warning' | 'alert';
+  active: boolean;
+  showInTopBar: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+

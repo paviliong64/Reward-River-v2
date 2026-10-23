@@ -17,9 +17,11 @@ import {
   OfferwallItem,
   AdSettings,
   AdvertiserOverview,
-  AdvertiserDeposit
+  AdvertiserDeposit,
+  PlatformAnnouncement
 } from './types';
 import { UsdtNetwork } from './utils/usdt';
+import { AnnouncementBar } from './components/AnnouncementBar';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { LandingPage } from './components/LandingPage';
@@ -78,6 +80,7 @@ export default function App() {
   const [workerSubmissions, setWorkerSubmissions] = useState<TaskSubmission[]>([]);
   const [offerwalls, setOfferwalls] = useState<OfferwallItem[]>([]);
   const [adSettings, setAdSettings] = useState<AdSettings | null>(null);
+  const [announcements, setAnnouncements] = useState<PlatformAnnouncement[]>([]);
 
   // Advertiser specific data
   const [advertiserOverview, setAdvertiserOverview] = useState<AdvertiserOverview | null>(null);
@@ -110,6 +113,17 @@ export default function App() {
     try {
       const res = await fetch('/api/public/ads');
       if (res.ok) setAdSettings(await res.json());
+    } catch {}
+  }, []);
+
+  // Fetch active announcements & breaking notices
+  const fetchAnnouncements = useCallback(async () => {
+    try {
+      const res = await fetch('/api/public/announcements');
+      if (res.ok) {
+        const data = await res.json();
+        setAnnouncements(data.announcements || []);
+      }
     } catch {}
   }, []);
 
@@ -256,12 +270,20 @@ export default function App() {
     fetchAdvertiserData();
     fetchUsdtQuote();
     fetchPublicAds();
-  }, [fetchUserData, fetchTasks, fetchOfferwalls, fetchSurveys, fetchLedgerAndWithdrawals, fetchAdvertiserData, fetchUsdtQuote, fetchPublicAds]);
+    fetchAnnouncements();
+  }, [fetchUserData, fetchTasks, fetchOfferwalls, fetchSurveys, fetchLedgerAndWithdrawals, fetchAdvertiserData, fetchUsdtQuote, fetchPublicAds, fetchAnnouncements]);
 
   // Initial load & Auth Listener
   useEffect(() => {
     fetchUsdtQuote();
     fetchPublicAds();
+    fetchAnnouncements();
+
+    if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
+      setTimeout(() => {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }, 500);
+    }
 
     const authSub = onSupabaseAuthStateChange(async (_event, session) => {
       if (session?.user) {
@@ -589,6 +611,13 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 antialiased selection:bg-sky-500 selection:text-white">
+      {/* Top Announcement Bar */}
+      <AnnouncementBar
+        announcement={announcements.find((a) => a.active && a.showInTopBar) || null}
+        allAnnouncements={announcements.filter((a) => a.active)}
+        onNavigateTab={setCurrentTab}
+      />
+
       {/* Top Navigation */}
       <Navbar
         user={user}
@@ -614,6 +643,7 @@ export default function App() {
             }}
             onOpenLegal={(page) => setLegalModalPage(page)}
             usdtQuote={usdtQuote}
+            currentUser={user}
           />
         )}
 

@@ -113,10 +113,14 @@ export async function signInWithSupabaseGoogle(): Promise<void> {
   if (!isSupabaseConfigured) {
     throw new Error('Please configure Supabase credentials in .env to use Google OAuth.');
   }
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://reward-river.vercel.app';
+  const isLocal = currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1');
+  const targetRedirect = isLocal ? `${currentOrigin}/` : 'https://reward-river.vercel.app/';
+
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}/`,
+      redirectTo: targetRedirect,
       queryParams: {
         access_type: 'offline',
         prompt: 'consent'

@@ -10,7 +10,9 @@ import {
   ProviderConfig,
   AdSlotConfig,
   PlatformTreasuryEntry,
-  FinancialSummary
+  FinancialSummary,
+  PlatformReview,
+  PlatformAnnouncement
 } from '../types';
 import {
   ShieldCheck,
@@ -50,7 +52,9 @@ import {
   Terminal,
   Activity,
   Linkedin,
-  Github
+  Github,
+  Star,
+  Bell
 } from 'lucide-react';
 
 interface AdminViewProps {
@@ -65,7 +69,7 @@ interface AdminViewProps {
 export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLoginSuccess }: AdminViewProps) {
   const triggerRefresh = onRefreshAll || onDataChanged || (() => {});
   const [activeSubTab, setActiveSubTab] = useState<
-    'financials' | 'providers' | 'ads' | 'commissions' | 'withdrawals' | 'users' | 'campaigns' | 'submissions' | 'simulator' | 'security'
+    'financials' | 'providers' | 'ads' | 'commissions' | 'withdrawals' | 'users' | 'campaigns' | 'submissions' | 'reviews' | 'announcements' | 'simulator' | 'security'
   >('financials');
 
   const [financials, setFinancials] = useState<FinancialSummary | null>(null);
@@ -76,6 +80,10 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
   const [usersList, setUsersList] = useState<AdminUserDetail[]>([]);
   const [campaignsList, setCampaignsList] = useState<TaskCampaign[]>([]);
   const [submissionsList, setSubmissionsList] = useState<TaskSubmission[]>([]);
+  const [adminReviews, setAdminReviews] = useState<PlatformReview[]>([]);
+  const [reviewFilter, setReviewFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [adminAnnouncements, setAdminAnnouncements] = useState<PlatformAnnouncement[]>([]);
+  const [announcementModal, setAnnouncementModal] = useState<Partial<PlatformAnnouncement> | null>(null);
   const [settings, setSettings] = useState<SystemSettings | null>(null);
 
   const [loading, setLoading] = useState(false);
@@ -336,7 +344,7 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
       const token = localStorage.getItem('rr_auth_token');
       const headers = { Authorization: `Bearer ${token}` };
 
-      const [finRes, trRes, provRes, adsRes, wRes, sRes, uRes, cRes, subRes] = await Promise.all([
+      const [finRes, trRes, provRes, adsRes, wRes, sRes, uRes, cRes, subRes, revRes, annRes] = await Promise.all([
         fetch('/api/admin/financials', { headers }),
         fetch('/api/admin/treasury', { headers }),
         fetch('/api/admin/providers', { headers }),
@@ -345,7 +353,9 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
         fetch('/api/admin/settings', { headers }),
         fetch('/api/admin/users', { headers }),
         fetch('/api/admin/campaigns', { headers }),
-        fetch('/api/admin/submissions', { headers })
+        fetch('/api/admin/submissions', { headers }),
+        fetch('/api/admin/reviews', { headers }),
+        fetch('/api/admin/announcements', { headers })
       ]);
 
       if (finRes.ok) setFinancials((await finRes.json()).summary || null);
@@ -357,6 +367,8 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
       if (uRes.ok) setUsersList((await uRes.json()).users || []);
       if (cRes.ok) setCampaignsList((await cRes.json()).campaigns || []);
       if (subRes.ok) setSubmissionsList((await subRes.json()).submissions || []);
+      if (revRes.ok) setAdminReviews((await revRes.json()).reviews || []);
+      if (annRes.ok) setAdminAnnouncements((await annRes.json()).announcements || []);
     } catch (err) {
       console.error('Failed to load admin data:', err);
     } finally {
@@ -378,6 +390,135 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  // --- Reviews Handlers ---
+  const fetchAdminReviews = async () => {
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch('/api/admin/reviews', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAdminReviews(data.reviews || []);
+      }
+    } catch {}
+  };
+
+  const handleUpdateReviewStatus = async (id: string, status: 'approved' | 'rejected') => {
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch(`/api/admin/reviews/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        setActionMessage({ text: `Review marked as ${status}.`, type: 'success' });
+        fetchAdminReviews();
+        triggerRefresh();
+      }
+    } catch {}
+  };
+
+  const handleDeleteReview = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this review?')) return;
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch(`/api/admin/reviews/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setActionMessage({ text: 'Review deleted.', type: 'success' });
+        fetchAdminReviews();
+        triggerRefresh();
+      }
+    } catch {}
+  };
+
+  // --- Announcements Handlers ---
+  const fetchAdminAnnouncements = async () => {
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch('/api/admin/announcements', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAdminAnnouncements(data.announcements || []);
+      }
+    } catch {}
+  };
+
+  const handleSaveAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!announcementModal || !announcementModal.title || !announcementModal.message) return;
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const isEdit = Boolean(announcementModal.id);
+      const url = isEdit ? `/api/admin/announcements/${announcementModal.id}` : '/api/admin/announcements';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(announcementModal)
+      });
+      if (res.ok) {
+        setActionMessage({ text: 'Announcement saved successfully.', type: 'success' });
+        setAnnouncementModal(null);
+        fetchAdminAnnouncements();
+        triggerRefresh();
+      }
+    } catch {}
+  };
+
+  const handleToggleAnnouncementTopBar = async (ann: PlatformAnnouncement) => {
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch(`/api/admin/announcements/${ann.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ showInTopBar: !ann.showInTopBar })
+      });
+      if (res.ok) {
+        fetchAdminAnnouncements();
+        triggerRefresh();
+      }
+    } catch {}
+  };
+
+  const handleToggleAnnouncementActive = async (ann: PlatformAnnouncement) => {
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch(`/api/admin/announcements/${ann.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ active: !ann.active })
+      });
+      if (res.ok) {
+        fetchAdminAnnouncements();
+        triggerRefresh();
+      }
+    } catch {}
+  };
+
+  const handleDeleteAnnouncement = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this announcement?')) return;
+    try {
+      const token = localStorage.getItem('rr_auth_token');
+      const res = await fetch(`/api/admin/announcements/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setActionMessage({ text: 'Announcement deleted.', type: 'success' });
+        fetchAdminAnnouncements();
+        triggerRefresh();
+      }
+    } catch {}
   };
 
   // --- Provider Handlers ---
@@ -985,6 +1126,30 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
         >
           <CheckSquare className="w-3.5 h-3.5" />
           <span>Proofs Queue ({submissionsList.filter(s => s.status === 'pending_review').length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('reviews')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+            activeSubTab === 'reviews'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+          <span>⭐ Reviews Moderation ({adminReviews.filter(r => r.status === 'pending').length} Pending)</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('announcements')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+            activeSubTab === 'announcements'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Bell className="w-3.5 h-3.5 text-sky-400" />
+          <span>📢 Announcements ({adminAnnouncements.length})</span>
         </button>
 
         <button
@@ -2064,6 +2229,281 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
         </div>
       )}
 
+      {/* TAB: REVIEWS MODERATION */}
+      {activeSubTab === 'reviews' && (
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+                <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                <span>Reviews & Community Feedback Moderation</span>
+              </h3>
+              <p className="text-xs text-slate-500">
+                Review, verify, and moderate genuine member testimonials and payout receipts.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 font-bold">
+                Pending Approval: {adminReviews.filter(r => r.status === 'pending').length}
+              </span>
+              <span className="text-xs px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">
+                Published: {adminReviews.filter(r => r.status === 'approved').length}
+              </span>
+            </div>
+          </div>
+
+          {/* Filter Bar */}
+          <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1">
+            <div className="flex items-center gap-1.5">
+              {(['all', 'pending', 'approved', 'rejected'] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setReviewFilter(tab)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold capitalize transition ${
+                    reviewFilter === tab
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {tab} ({tab === 'all' ? adminReviews.length : adminReviews.filter(r => r.status === tab).length})
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={fetchAdminReviews}
+              className="px-3.5 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Refresh Reviews</span>
+            </button>
+          </div>
+
+          {/* Reviews List */}
+          {adminReviews.filter(r => reviewFilter === 'all' || r.status === reviewFilter).length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500 text-xs">
+              No reviews found matching the "{reviewFilter}" filter.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {adminReviews
+                .filter(r => reviewFilter === 'all' || r.status === reviewFilter)
+                .map(rev => (
+                  <div
+                    key={rev.id}
+                    className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between gap-3"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-slate-900 text-sm">{rev.userName}</span>
+                            {rev.userCountry && (
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                                {rev.userCountry}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] text-slate-400">
+                            {new Date(rev.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                            rev.status === 'approved'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : rev.status === 'rejected'
+                              ? 'bg-rose-50 text-rose-700 border-rose-200'
+                              : 'bg-amber-50 text-amber-800 border-amber-300'
+                          }`}
+                        >
+                          {rev.status}
+                        </span>
+                      </div>
+
+                      {/* Stars */}
+                      <div className="flex items-center gap-0.5 mb-2">
+                        {[1, 2, 3, 4, 5].map(s => (
+                          <Star
+                            key={s}
+                            className={`w-3.5 h-3.5 ${
+                              s <= rev.rating ? 'text-amber-400 fill-amber-400' : 'text-slate-200 fill-slate-200'
+                            }`}
+                          />
+                        ))}
+                      </div>
+
+                      {rev.title && (
+                        <h4 className="font-bold text-slate-800 text-xs mb-1">{rev.title}</h4>
+                      )}
+                      <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        "{rev.comment}"
+                      </p>
+
+                      {rev.payoutProofUsdt && (
+                        <div className="mt-2.5 text-xs text-emerald-700 font-bold flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>USDT Withdrawal Proof: ${rev.payoutProofUsdt.toFixed(2)} USDT</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                      <div className="flex items-center gap-2">
+                        {rev.status !== 'approved' && (
+                          <button
+                            onClick={() => handleUpdateReviewStatus(rev.id, 'approved')}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center gap-1 shadow-xs transition"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Approve & Publish</span>
+                          </button>
+                        )}
+                        {rev.status !== 'rejected' && (
+                          <button
+                            onClick={() => handleUpdateReviewStatus(rev.id, 'rejected')}
+                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl flex items-center gap-1 transition"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            <span>Reject</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => handleDeleteReview(rev.id)}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                        title="Delete Review"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB: ANNOUNCEMENTS MANAGEMENT */}
+      {activeSubTab === 'announcements' && (
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+                <Bell className="w-5 h-5 text-sky-600" />
+                <span>Announcements & Breaking News Center</span>
+              </h3>
+              <p className="text-xs text-slate-500">
+                Manage top notification bar alerts and system-wide bonus notifications.
+              </p>
+            </div>
+
+            <button
+              onClick={() =>
+                setAnnouncementModal({
+                  title: '',
+                  message: '',
+                  badge: 'UPDATE',
+                  type: 'info',
+                  linkText: '',
+                  linkTab: 'tasks',
+                  showInTopBar: true,
+                  active: true
+                })
+              }
+              className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Announcement</span>
+            </button>
+          </div>
+
+          {/* Announcements List */}
+          <div className="space-y-3">
+            {adminAnnouncements.map(ann => (
+              <div
+                key={ann.id}
+                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4"
+              >
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-900 text-cyan-400 border border-slate-800">
+                      {ann.badge || 'NOTICE'}
+                    </span>
+                    <h4 className="font-bold text-slate-900 text-sm truncate">{ann.title}</h4>
+                    {ann.showInTopBar && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                        ⭐ Active on Top Bar
+                      </span>
+                    )}
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                        ann.active
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-slate-100 text-slate-500 border-slate-200'
+                      }`}
+                    >
+                      {ann.active ? 'Active' : 'Disabled'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">{ann.message}</p>
+                  {ann.linkText && (
+                    <div className="text-[11px] text-sky-600 font-semibold flex items-center gap-1">
+                      <span>Action Link: "{ann.linkText}"</span>
+                      <span>→</span>
+                      <span className="font-mono bg-sky-50 px-1.5 py-0.5 rounded">
+                        #{ann.linkTab || 'home'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  <button
+                    onClick={() => handleToggleAnnouncementTopBar(ann)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                      ann.showInTopBar
+                        ? 'bg-amber-50 border-amber-300 text-amber-800'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {ann.showInTopBar ? 'Remove from Top Bar' : 'Set as Top Bar'}
+                  </button>
+
+                  <button
+                    onClick={() => handleToggleAnnouncementActive(ann)}
+                    className="p-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50"
+                    title={ann.active ? 'Pause Announcement' : 'Activate Announcement'}
+                  >
+                    {ann.active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  </button>
+
+                  <button
+                    onClick={() => setAnnouncementModal(ann)}
+                    className="p-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50"
+                    title="Edit Announcement"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() => handleDeleteAnnouncement(ann.id)}
+                    className="p-1.5 rounded-xl border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                    title="Delete Announcement"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* MODAL: PROVIDER ADD / EDIT */}
       {providerModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
@@ -2454,17 +2894,137 @@ export function AdminView({ adminUser, onRefreshAll, onDataChanged, onAdminLogin
         </div>
       )}
 
-      {/* MODAL: IMAGE PREVIEW */}
-      {previewImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white p-3 rounded-2xl max-w-3xl max-h-[90vh] overflow-auto relative">
-            <button
-              onClick={() => setPreviewImage(null)}
-              className="absolute right-3 top-3 p-1.5 bg-slate-900 text-white rounded-full hover:bg-slate-700 transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <img src={previewImage} alt="Submitted Proof" className="max-w-full rounded-xl" />
+      {/* MODAL: CREATE / EDIT ANNOUNCEMENT */}
+      {announcementModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <h4 className="font-bold text-slate-900 text-sm">
+                {announcementModal.id ? 'Edit Announcement' : 'Create New Announcement'}
+              </h4>
+              <button
+                onClick={() => setAnnouncementModal(null)}
+                className="p-1 rounded text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAnnouncement} className="p-5 space-y-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Title</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 🎉 20% Weekend Bonus Active"
+                  value={announcementModal.title || ''}
+                  onChange={e => setAnnouncementModal({ ...announcementModal, title: e.target.value })}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Message</label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="Full announcement text to display..."
+                  value={announcementModal.message || ''}
+                  onChange={e => setAnnouncementModal({ ...announcementModal, message: e.target.value })}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Badge</label>
+                  <input
+                    type="text"
+                    placeholder="UPDATE, BONUS, ALERT"
+                    value={announcementModal.badge || 'UPDATE'}
+                    onChange={e => setAnnouncementModal({ ...announcementModal, badge: e.target.value.toUpperCase() })}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Type</label>
+                  <select
+                    value={announcementModal.type || 'info'}
+                    onChange={e => setAnnouncementModal({ ...announcementModal, type: e.target.value as any })}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200"
+                  >
+                    <option value="info">Info (Cyan)</option>
+                    <option value="bonus">Bonus (Amber)</option>
+                    <option value="warning">Warning (Orange)</option>
+                    <option value="alert">Alert (Rose)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Link Button Text (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. View Tasks"
+                    value={announcementModal.linkText || ''}
+                    onChange={e => setAnnouncementModal({ ...announcementModal, linkText: e.target.value })}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Target Tab</label>
+                  <select
+                    value={announcementModal.linkTab || 'tasks'}
+                    onChange={e => setAnnouncementModal({ ...announcementModal, linkTab: e.target.value })}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200"
+                  >
+                    <option value="tasks">Tasks Marketplace</option>
+                    <option value="surveys">Direct Streams / Surveys</option>
+                    <option value="withdraw">USDT Withdrawal</option>
+                    <option value="dashboard">Dashboard</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-6 pt-2">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(announcementModal.showInTopBar)}
+                    onChange={e => setAnnouncementModal({ ...announcementModal, showInTopBar: e.target.checked })}
+                    className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                  />
+                  <span>Display in Top Notification Bar</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(announcementModal.active)}
+                    onChange={e => setAnnouncementModal({ ...announcementModal, active: e.target.checked })}
+                    className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                  />
+                  <span>Active</span>
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setAnnouncementModal(null)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold shadow-xs"
+                >
+                  Save Announcement
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
