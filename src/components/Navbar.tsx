@@ -78,7 +78,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Desktop Navigation Tabs */}
           {user ? (
-            <nav className="hidden lg:flex items-center gap-1.5" aria-label="Main Navigation">
+            <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5" aria-label="Main Navigation">
               {navItems.map(item => {
                 const Icon = item.icon;
                 const isActive = currentTab === item.id;
@@ -87,17 +87,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button
                     key={item.id}
                     onClick={() => handleNavClick(item.id)}
-                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs xl:text-sm font-semibold transition-all duration-150 ${
+                    className={`flex items-center gap-2 px-3 py-1.5 xl:px-3.5 xl:py-2 rounded-xl text-xs xl:text-sm font-semibold transition-all duration-150 whitespace-nowrap shrink-0 ${
                       isActive
                         ? isAdminItem
-                          ? 'bg-rose-50 text-rose-700 font-bold border border-rose-200/80 shadow-xs'
+                          ? 'bg-rose-50 text-rose-700 font-bold border border-rose-300 shadow-xs ring-1 ring-rose-200'
                           : 'bg-sky-50 text-sky-700 font-bold border border-sky-100 shadow-xs'
                         : isAdminItem
-                        ? 'text-rose-600 hover:text-rose-800 hover:bg-rose-50/60'
+                        ? 'text-rose-600 hover:text-rose-800 hover:bg-rose-50/70 border border-rose-200/60'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 ${isActive ? (isAdminItem ? 'text-rose-600' : 'text-sky-600') : 'text-slate-400'}`} />
+                    {isAdminItem ? (
+                      <div className="w-5 h-5 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                        <ShieldCheck className="w-3.5 h-3.5 stroke-[2.5]" />
+                      </div>
+                    ) : (
+                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-sky-600' : 'text-slate-400'}`} />
+                    )}
                     <span>{item.label}</span>
                   </button>
                 );
@@ -234,7 +240,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                     : 'text-slate-700 hover:bg-slate-50'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? (isAdminItem ? 'text-rose-600' : 'text-sky-600') : 'text-slate-400'}`} />
+                {isAdminItem ? (
+                  <div className="w-5 h-5 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                    <ShieldCheck className="w-3.5 h-3.5 stroke-[2.5]" />
+                  </div>
+                ) : (
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-sky-600' : 'text-slate-400'}`} />
+                )}
                 <span>{item.label}</span>
               </button>
             );
